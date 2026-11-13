@@ -2387,6 +2387,7 @@ The farmer application must be designed for smartphone use first.
 - Responsive data tables.
 - Easy document capture and upload.
 - Clear feedback after saving records.
+- **Auth viewport rule:** Sign-in and registration screens must fit within the visible viewport without clipping, page scroll, or inaccessible content. All required fields and the primary submit action remain visible and reachable at supported phone, tablet and desktop sizes, including short landscape and reduced-height windows. When a flow is too long, split it into clear steps before reducing spacing. Show validation and account-level errors in the global toast layer so messages never change form height. Never hide required fields or the submit action to force a fit. Recheck every auth account type whenever auth UI changes.
 
 ## 31.2 Desktop requirements
 

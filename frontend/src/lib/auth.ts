@@ -9,6 +9,7 @@ import {
   ApiError,
 } from "@/lib/api-client";
 import { saveInstitutionRegistration, type InstitutionRegistrationRecord } from "@/lib/simulated-data";
+import { initializeFarmerOnboarding } from "@/services";
 import { syncAllFromBackend } from "@/lib/backend-sync";
 
 export type MockRole = "farmer" | "admin" | "verification_agent" | "institutional_user";
@@ -27,6 +28,7 @@ export type ActiveSession = {
   phone: string;
   role: MockRole;
   accessToken?: string;
+  email?: string;
 };
 
 const USERS_KEY = "jari-simulated-users";
@@ -116,9 +118,6 @@ export function logoutSimulation(): void {
   if (typeof window !== "undefined") {
     removeStoredToken();
     window.localStorage.removeItem(SESSION_STORAGE_KEY);
-    Object.keys(window.localStorage)
-      .filter((k) => k.startsWith("jari-demo:v1:"))
-      .forEach((k) => window.localStorage.removeItem(k));
     window.dispatchEvent(new CustomEvent("jari:mock-data-changed", { detail: { key: "*" } }));
   }
 }
@@ -181,7 +180,8 @@ export function loginWithSimulation(phone: string, password: string): ActiveSess
 export async function registerWithBackend(
   fullName: string,
   phone: string,
-  password: string
+  password: string,
+  email?: string
 ): Promise<ActiveSession> {
   const trimmedName = fullName.trim();
   const normalizedPhone = normalizePhone(phone);
@@ -205,7 +205,11 @@ export async function registerWithBackend(
     role: "farmer",
   });
 
-  return await loginWithBackend(normalizedPhone, password);
+  const session = await loginWithBackend(normalizedPhone, password);
+  const updatedSession = { ...session, email: email?.trim().toLowerCase() };
+  saveSession(updatedSession);
+  initializeFarmerOnboarding(updatedSession.id, updatedSession.email);
+  return updatedSession;
 }
 
 /**

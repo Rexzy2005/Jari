@@ -1,4 +1,5 @@
 "use client";
+import { JariSelect } from "@/components/ui/jari-select";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -35,7 +36,7 @@ export default function NewExpensePage() {
                 <div className="grid gap-5 md:grid-cols-2">
                     <div>
                         <label className="label-text">Flock</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.flock}
                             onChange={(event) => handleChange("flock", event.target.value)}
@@ -43,7 +44,7 @@ export default function NewExpensePage() {
                             <option>Broiler Batch 02</option>
                             <option>Layer Batch 05</option>
                             <option>Breeder Batch 01</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>
@@ -58,7 +59,7 @@ export default function NewExpensePage() {
 
                     <div>
                         <label className="label-text">Expense category</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.category}
                             onChange={(event) => handleChange("category", event.target.value)}
@@ -71,7 +72,7 @@ export default function NewExpensePage() {
                             <option>Water</option>
                             <option>Maintenance and repairs</option>
                             <option>Other operating expenses</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>

@@ -1,5 +1,41 @@
 # JARI Frontend Progress
 
+## Module 1/2 architecture synchronization — completed 2026-11-13
+
+Before beginning Module 1 application changes, the complete available development-plan folder was reviewed: `JARI_Module_1_Updated.md` and `JARI_Module_2_Updated.md`. README, frontend progress/handoff documents, current frontend documentation, and the relevant auth, dashboard, farm form, service-facade and simulated-data implementation were inspected.
+
+- Added [architecture.md](architecture.md) as the canonical shared product/data architecture and linked it from the README. It records Farm → Houses → Batches, record ownership, aggregation, connected/independent capabilities, module boundaries, and the difference between current simulation and target contracts.
+- The two plans agree that Module 1 is frontend/mock only and must stop at primary-farm onboarding; Module 2 owns house/flock/inventory workflows. Module 2 permits flock and inventory to operate independently. Later production/health functions extend shared batch identities, and institution workflows follow the farmer/farm foundation.
+- Existing code has a service facade and browser-local simulated workflows for farm profile, houses, flocks/movements, feed/inventory, production and health. These are implemented to varying levels; existing progress/handoff files list validation separately. No claim is made that all plan requirements are implemented or backend connected.
+- Main gap: current farmer auth and farm profile persistence are legacy-shaped; the profile is a single shared record and several operational records lack complete account/farm ownership. Module 1 therefore needs account-scoped onboarding records and an atomic completion service, while preserving demo seed behavior and migrating legacy data safely. GPS/geocoding provider is absent; browser geolocation plus manual farm-location entry is the plan-compatible implementation.
+- A sequencing ambiguity remains in Module 2: it describes house management as the operational foundation, while a later restriction defers some house-management implementation pending separate authorization. This does not block Module 1 and will be respected when Module 2 is taken up. No owner decision is needed for Module 1.
+- Module 1 scope remains exactly account/contact-verification demo, resumable setup, farmer profile, primary farm, review and dashboard activation. No backend, migrations, house/batch records, inventory or production work is authorized by this phase.
+
+**Gate result:** architecture synchronization is recorded; Module 1 implementation may proceed within the boundary above.
+
+### Module 1 implementation — in progress
+
+- Expanded farmer registration to first/last name, email, phone, password, confirmation and privacy acceptance. The current interface clearly states that contact-verification messages are not sent because no email/SMS verification provider is configured. Existing backend registration still accepts phone/name/password; email is retained with this browser's onboarding record pending a backend contract change in a separately authorized phase.
+- Added account-keyed onboarding records through the shared simulated-data/service layers. Profile, farm identity, farm location/GPS metadata, infrastructure, farm membership/primary-farm IDs, onboarding state and timestamps have explicit logical boundaries. Onboarding completion is saved in one account record; browser-storage write errors leave completion unset.
+- Added a resumable five-step farmer profile, farm identity, location, poultry/infrastructure and review flow. Location permission is user initiated; typed coordinates and administrative/address details remain available as fallback. Capacity/current-bird validation and conditional CAC entry are included.
+- New farmer dashboards block operational figures until setup is complete, then show the registered primary farm and genuine empty state with an Inventory Setup action. Logout now preserves all browser-local farmer data rather than deleting every account's records.
+- Backend, migrations, house records, flock records, inventory operations and other later-module workflows were not changed.
+- Remaining before Module 1 completion: optional profile-photo support, more complete location and numeric edge-case validation, account/email behavior across backend sign-in, alignment of legacy operational screens with account-scoped farms, interrupted-flow review, responsive/browser review, and documented verification. No tests or builds have been run in this pass.
+
+### Auth viewport regression fix
+
+- Added the standing no-overflow rule to `active.md` and the frontend responsive-design requirements: auth pages must fit the viewport without clipping/scrolling or hiding required fields/actions; validate all account types on mobile and desktop after auth changes.
+- Reworked farmer signup as two progressive steps (contact details, then password/consent), preserving entries and providing Back/Continue actions. This reduces the content shown at once while retaining comfortable field spacing and a visible primary action.
+- Visual/browser validation has not been run in this pass.
+- Auth validation, API and upload errors now use the global fixed toast viewport rather than inline blocks, preventing error states from shifting the form card or submit action. Native constraint feedback is routed through toast notifications as well.
+
+### Signup form refinement
+
+- Refined the two-step signup into a contained registration card with labeled progress, clearer section hierarchy and intentional spacing.
+- Added real Lucide icons for step state, password checklist state and navigation. The live password checklist reflects the backend's six-character minimum and confirmation match, with guidance to choose a memorable phrase unique to JARI.
+- Removed duplicate signup and step headings, and placed the account-type label alongside its selector to reduce unnecessary vertical height while preserving field spacing.
+- Kept the signup fields and primary action within the no-overflow auth layout rule. Browser review is still outstanding.
+
 ## Phase 0: Requirements review and project assessment
 
 Status: Completed

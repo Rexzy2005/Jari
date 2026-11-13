@@ -1,8 +1,10 @@
 "use client";
+import { JariSelect } from "@/components/ui/jari-select";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { defaultFarmProfile, getFarmProfile, saveFarmProfile } from "@/services";
+import { getFarmerFarmProfile, saveFarmerFarmProfile } from "@/services";
+import { getSavedSession } from "@/lib/auth";
 
 const initialForm = {
     farmName: "",
@@ -28,7 +30,8 @@ export default function NewFarmPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        const existing = getFarmProfile();
+        const session = getSavedSession();
+        const existing = getFarmerFarmProfile(session?.id ?? "", session?.fullName ?? "", session?.phone ?? "");
         setForm({ ...initialForm, ...existing, biosecurity: existing.biosecurity ?? [] });
     }, []);
 
@@ -49,7 +52,8 @@ export default function NewFarmPage() {
         setError("");
         setIsSubmitting(true);
         try {
-            await saveFarmProfile({ ...form, biosecurity: form.biosecurity });
+            const session = getSavedSession();
+            await saveFarmerFarmProfile(session?.id ?? "", { ...form, biosecurity: form.biosecurity });
             setIsSaved(true);
             window.setTimeout(() => router.push("/farm"), 500);
         } catch (issue) {
@@ -146,7 +150,7 @@ export default function NewFarmPage() {
 
                     <div>
                         <label className="label-text">Poultry operation type</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.operationType}
                             onChange={(event) => handleChange("operationType", event.target.value)}
@@ -154,12 +158,12 @@ export default function NewFarmPage() {
                             <option>Broiler</option>
                             <option>Layer</option>
                             <option>Breeder</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>
                         <label className="label-text">Production system</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.productionSystem}
                             onChange={(event) => handleChange("productionSystem", event.target.value)}
@@ -168,7 +172,7 @@ export default function NewFarmPage() {
                             <option>Battery cage</option>
                             <option>Free range</option>
                             <option>Other</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>
@@ -184,7 +188,7 @@ export default function NewFarmPage() {
 
                     <div>
                         <label className="label-text">Water source</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.waterSource}
                             onChange={(event) => handleChange("waterSource", event.target.value)}
@@ -194,7 +198,7 @@ export default function NewFarmPage() {
                             <option>Municipal supply</option>
                             <option>Surface water</option>
                             <option>Other</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div className="md:col-span-2">

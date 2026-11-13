@@ -147,6 +147,21 @@ export type UserPreferences = { productionReminders: boolean; healthReminders: b
 export type FarmDocumentRecord = { id: string; name: string; type: string; size: number; addedAt: string; dataUrl: string };
 export type InstitutionDemoAccess = { shared: boolean; updatedAt?: string };
 
+export type FarmerOnboardingRecord = {
+    userId: string;
+    accountEmail: string;
+    farmId: string | null;
+    primaryFarmId: string | null;
+    profile: { state: string; lga: string; community: string; photoDataUrl?: string } | null;
+    farm: Record<string, string | number | null> | null;
+    farmLocation: { farmId: string; state: string; lga: string; community: string; address: string; latitude: number | null; longitude: number | null; source: string; accuracy: number | null; capturedAt: string } | null;
+    farmInfrastructure: { farmId: string; water: string; electricity: string; waste: string } | null;
+    completedSteps: string[];
+    completed: boolean;
+    createdAt: string;
+    updatedAt: string;
+};
+
 const storageSchemaVersion = 1;
 const storagePrefix = `jari-demo:v${storageSchemaVersion}:`;
 
@@ -231,6 +246,31 @@ export const defaultFarmProfile: SavedFarmProfile = {
 
 export const getFarmProfile = () => readStorage<SavedFarmProfile>(STORAGE_KEYS.farmProfile, defaultFarmProfile);
 export const saveFarmProfile = (value: SavedFarmProfile) => writeWithActivity(STORAGE_KEYS.farmProfile, value);
+const onboardingKey = (userId: string) => `farmer-onboarding:${userId}`;
+export const getFarmerOnboarding = (userId: string): FarmerOnboardingRecord | null => {
+    if (!userId || typeof window === "undefined") return null;
+    return readStorage<FarmerOnboardingRecord | null>(onboardingKey(userId), null);
+};
+export const initializeFarmerOnboarding = (userId: string, accountEmail = "") => {
+    if (!userId) throw new Error("A signed-in farmer is required to start onboarding.");
+    const existing = getFarmerOnboarding(userId);
+    if (existing) return existing;
+    const now = new Date().toISOString();
+    const record: FarmerOnboardingRecord = { userId, accountEmail: accountEmail.trim().toLowerCase(), farmId: null, primaryFarmId: null, profile: null, farm: null, farmLocation: null, farmInfrastructure: null, completedSteps: [], completed: false, createdAt: now, updatedAt: now };
+    writeStorage(onboardingKey(userId), record);
+    return record;
+};
+export const saveFarmerOnboarding = (userId: string, patch: Partial<Pick<FarmerOnboardingRecord, "profile" | "farm" | "completedSteps" | "completed">>) => {
+    if (!userId) throw new Error("A signed-in farmer is required to save onboarding.");
+    const current = getFarmerOnboarding(userId) ?? initializeFarmerOnboarding(userId);
+    const farmId = patch.farm ? current.farmId ?? idFor("farm") : current.farmId;
+    const farm = patch.farm ?? current.farm;
+    const location = farm ? { farmId: farmId as string, state: String(farm.state ?? ""), lga: String(farm.lga ?? ""), community: String(farm.community ?? ""), address: String(farm.address ?? ""), latitude: typeof farm.latitude === "number" ? farm.latitude : null, longitude: typeof farm.longitude === "number" ? farm.longitude : null, source: String(farm.locationSource ?? ""), accuracy: typeof farm.locationAccuracy === "number" ? farm.locationAccuracy : null, capturedAt: String(farm.locationCapturedAt ?? "") } : current.farmLocation;
+    const infrastructure = farm ? { farmId: farmId as string, water: String(farm.water ?? ""), electricity: String(farm.electricity ?? ""), waste: String(farm.waste ?? "") } : current.farmInfrastructure;
+    const updated: FarmerOnboardingRecord = { ...current, ...patch, farmId, primaryFarmId: farm ? farmId : current.primaryFarmId, farm, farmLocation: location, farmInfrastructure: infrastructure, userId, updatedAt: new Date().toISOString() };
+    writeStorage(onboardingKey(userId), updated);
+    return updated;
+};
 export const getKycApplication = () => readStorage<KycApplication | null>(STORAGE_KEYS.kycApplication, null);
 export const saveKycApplication = (value: KycApplication) => writeWithActivity(STORAGE_KEYS.kycApplication, value);
 
@@ -458,10 +498,9 @@ export const updateInstitutionRequest = (id: string, status: InstitutionRequestR
 export const getUserPreferences = () => readStorage<UserPreferences>(STORAGE_KEYS.userPreferences, { productionReminders: true, healthReminders: true, financialUpdates: true, analyticsConsent: false });
 export const saveUserPreferences = (preferences: UserPreferences) => writeStorage(STORAGE_KEYS.userPreferences, preferences);
 export const getInstitutionDemoAccess = () => {
-    const access = readStorage<InstitutionDemoAccess>(STORAGE_KEYS.institutionDemoAccess, { shared: true });
-    // Older builds could leave an unintentional false default without a timestamp.
-    // Preserve explicit farmer choices, which are written with updatedAt.
-    if (!access.shared && !access.updatedAt) return { shared: true };
+    const access = readStorage<InstitutionDemoAccess>(STORAGE_KEYS.institutionDemoAccess, { shared: false });
+    // Only a saved, timestamped choice enables sharing; legacy defaults are not consent.
+    if (!access.updatedAt) return { shared: false };
     return access;
 };
 export const saveInstitutionDemoAccess = (shared: boolean) => writeWithActivity(STORAGE_KEYS.institutionDemoAccess, { shared, updatedAt: new Date().toISOString() });

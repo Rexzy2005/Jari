@@ -1,4 +1,5 @@
 "use client";
+import { JariSelect } from "@/components/ui/jari-select";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -37,13 +38,13 @@ export default function NewSalePage() {
                 <div className="grid gap-5 md:grid-cols-2">
                     <div>
                         <label className="label-text">Flock</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.flock}
                             onChange={(event) => handleChange("flock", event.target.value)}
                         >
                             {getFlockRecords().filter((flock) => flock.status === "Active").map((flock) => <option key={flock.name}>{flock.name}</option>)}
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>
@@ -58,7 +59,7 @@ export default function NewSalePage() {
 
                     <div>
                         <label className="label-text">Product sold</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.product}
                             onChange={(event) => handleChange("product", event.target.value)}
@@ -67,7 +68,7 @@ export default function NewSalePage() {
                             <option>Eggs</option>
                             <option>Manure</option>
                             <option>Other poultry products</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>
@@ -83,7 +84,7 @@ export default function NewSalePage() {
 
                     <div>
                         <label className="label-text">Unit of measurement</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.unitMeasurement}
                             onChange={(event) => handleChange("unitMeasurement", event.target.value)}
@@ -92,7 +93,7 @@ export default function NewSalePage() {
                             <option>Crates</option>
                             <option>Trays</option>
                             <option>Kg</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>

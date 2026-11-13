@@ -1,5 +1,13 @@
 # JARI Frontend Implementation Tracker
 
+## Current development plan: Module 1
+
+Architecture synchronization is complete and recorded in `progress.md` and `architecture.md`. Farmer onboarding is actively being implemented through browser-local simulated services. Current work includes required account contact fields, resumable profile/farm registration, separate farm location metadata, user-initiated GPS with manual fallback, review and an honest post-onboarding dashboard. This work does not include backend changes or house/batch/inventory implementation. Consult the Module 1 entry in `progress.md` for gaps and limitations; the older checklist below tracks the broader pre-existing frontend work.
+
+## Standing auth layout rule
+
+Auth pages must fit the available viewport without clipping, page scrolling, or hidden controls at any supported viewport size. Every form field and primary action must remain visible and reachable. When a flow is too long, split it into clear steps before reducing the design's spacing. Show validation and account-level errors in the global toast layer so messages never change form height. Never solve overflow by hiding or clipping required fields or the submit button. Check both sign-in and every registration account type on desktop and mobile after auth changes.
+
 This tracker continues the work in `frontend-fix.md`. The application is frontend-only: use simulated services and browser storage; do not add or change backend code.
 
 ## Current status

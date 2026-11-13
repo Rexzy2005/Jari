@@ -4,7 +4,10 @@ import { useMemo, useRef, useState, type FormEvent, type ReactNode } from "react
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, FileText, UploadCloud } from "lucide-react";
 import { registerInstitutionWithBackend } from "@/lib/auth";
+import { notifyToast } from "@/lib/toast";
 import type { InstitutionCategory, InstitutionVerificationDocument } from "@/lib/simulated-data";
+import { AuthDropdown } from "./account-type-dropdown";
+import { PrivacyPolicyModal } from "./privacy-policy-modal";
 
 type Details = Record<string, string>;
 type WizardData = {
@@ -12,13 +15,13 @@ type WizardData = {
   officialEmail: string; officialPhone: string; website: string; officeAddress: string; state: string; lga: string;
   categories: InstitutionCategory[]; services: Partial<Record<InstitutionCategory, Details>>;
   representative: { fullName: string; jobTitle: string; email: string; phone: string };
-  password: string; confirmPassword: string; agreed: boolean;
+  password: string; confirmPassword: string; agreed: boolean; policyAgreed: boolean;
 };
 
 const categories: InstitutionCategory[] = ["Lending Institution", "Insurance Provider", "Grant Provider"];
 const organisationTypes = ["Bank", "Microfinance bank", "Finance company", "Insurance company", "Government agency", "NGO", "Cooperative", "Other"];
 const blankData: WizardData = {
-  organisationName: "", organisationType: "", cacRegistrationNumber: "", yearEstablished: "", officialEmail: "", officialPhone: "", website: "", officeAddress: "", state: "", lga: "", categories: [], services: {}, representative: { fullName: "", jobTitle: "", email: "", phone: "" }, password: "", confirmPassword: "", agreed: false,
+  organisationName: "", organisationType: "", cacRegistrationNumber: "", yearEstablished: "", officialEmail: "", officialPhone: "", website: "", officeAddress: "", state: "", lga: "", categories: [], services: {}, representative: { fullName: "", jobTitle: "", email: "", phone: "" }, password: "", confirmPassword: "", agreed: false, policyAgreed: false,
 };
 
 type FieldSpec = { key: string; label: string; multiline?: boolean; optional?: boolean; placeholder?: string; type?: string };
@@ -63,8 +66,8 @@ export function InstitutionRegistrationWizard() {
   const [documents, setDocuments] = useState<InstitutionVerificationDocument[]>([]);
   const [logo, setLogo] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [policyOpen, setPolicyOpen] = useState(false);
 
   const steps = useMemo<WizardStep[]>(() => {
     const selected = serviceSteps.filter((step) => data.categories.includes(step.category));
@@ -105,7 +108,6 @@ export function InstitutionRegistrationWizard() {
 
   const addFiles = async (files: FileList | null, category: string) => {
     if (!files?.length) return;
-    setError("");
     try {
       const converted = await Promise.all(Array.from(files).map(async (file) => ({
         id: `${category}-${file.name}-${file.lastModified}`,
@@ -117,29 +119,39 @@ export function InstitutionRegistrationWizard() {
       })));
       setDocuments((current) => [...current, ...converted.filter((item) => !current.some((existing) => existing.category === category && existing.name === item.name && existing.size === item.size))]);
     } catch {
-      setError("We could not read one of those files. Please choose it again.");
+      notifyToast("error", "We could not read one of those files. Please choose it again.");
     }
   };
   const removeFile = (id: string) => setDocuments((current) => current.filter((item) => item.id !== id));
 
   const validateCurrentStep = () => {
+    if (activeStep.kind === "organisation" && !data.organisationType) {
+      notifyToast("error", "Choose an organisation type to continue.");
+      return false;
+    }
     if (activeStep.kind === "services" && data.categories.length === 0) {
-      setError("Choose at least one service category to continue.");
+      notifyToast("error", "Choose at least one service category to continue.");
       return false;
     }
     if (activeStep.kind === "credentials" && data.password !== data.confirmPassword) {
-      setError("The passwords do not match.");
+      notifyToast("error", "The passwords do not match.");
       return false;
     }
     if (activeStep.kind === "document" && activeStep.documentRequired) {
       const hasDocument = documents.some((document) => document.category === activeStep.documentCategory);
       if (!hasDocument) {
-        setError("Please add the requested document to continue.");
+        notifyToast("error", "Please add the requested document to continue.");
         return false;
       }
     }
-    if (activeStep.kind !== "review" && formRef.current && !formRef.current.reportValidity()) return false;
-    setError("");
+    if (activeStep.kind !== "review" && formRef.current) {
+      const invalidField = formRef.current.querySelector(":invalid") as HTMLInputElement | null;
+      if (invalidField) {
+        notifyToast("error", invalidField.validationMessage);
+        invalidField.focus();
+        return false;
+      }
+    }
     return true;
   };
 
@@ -148,12 +160,12 @@ export function InstitutionRegistrationWizard() {
     if (!validateCurrentStep()) return;
     setStepIndex((current) => Math.min(current + 1, steps.length - 1));
   };
-  const back = () => { setError(""); setStepIndex((current) => Math.max(0, current - 1)); };
+  const back = () => { setStepIndex((current) => Math.max(0, current - 1)); };
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError("");
-    if (!data.agreed) { setError("Please confirm that you have permission to submit these organisation details."); return; }
-    if (data.password !== data.confirmPassword) { setError("The passwords do not match."); return; }
+    if (!data.agreed) { notifyToast("error", "Please confirm that you have permission to submit these organisation details."); return; }
+    if (!data.policyAgreed) { notifyToast("error", "Please accept the privacy and data-use terms before submitting."); return; }
+    if (data.password !== data.confirmPassword) { notifyToast("error", "The passwords do not match."); return; }
     setIsSubmitting(true);
     try {
       const session = await registerInstitutionWithBackend(data.representative.phone, data.password, {
@@ -163,7 +175,7 @@ export function InstitutionRegistrationWizard() {
       });
       router.push(session.role === "institutional_user" ? "/institution" : "/dashboard");
     } catch (registrationError) {
-      setError(registrationError instanceof Error ? registrationError.message : "Unable to submit this institution profile.");
+      notifyToast("error", registrationError instanceof Error ? registrationError.message : "Unable to submit this institution profile.");
     } finally { setIsSubmitting(false); }
   };
 
@@ -179,11 +191,11 @@ export function InstitutionRegistrationWizard() {
       {steps.map((step, index) => <span key={step.id} title={step.title} className={`h-1.5 flex-1 rounded-full transition-colors ${index <= stepIndex ? "bg-[#547253]" : "bg-[#e7ebe3]"}`} />)}
     </div>
 
-    <form ref={formRef} onSubmit={activeStep.kind === "review" ? submit : next} className="auth-wizard-form space-y-2.5" noValidate={false}>
+    <form ref={formRef} onSubmit={activeStep.kind === "review" ? submit : next} className="auth-wizard-form space-y-2.5" noValidate>
       <div className={`auth-wizard-fields min-h-0 grid grid-cols-1 gap-x-3 gap-y-2.5 sm:grid-cols-2 ${activeStep.kind === "organisation" ? "auth-wizard-fields-organisation" : ""}`}>
         {activeStep.kind === "organisation" && <>
           <Field label="Organisation name"><input required autoComplete="organization" className="input-shell" value={data.organisationName} onChange={(event) => update({ organisationName: event.target.value })} placeholder="Registered name" /></Field>
-          <Field label="Organisation type"><select required className="input-shell" value={data.organisationType} onChange={(event) => update({ organisationType: event.target.value })}><option value="">Select type</option>{organisationTypes.map((type) => <option key={type}>{type}</option>)}</select></Field>
+          <Field label="Organisation type"><AuthDropdown value={data.organisationType} options={organisationTypes} placeholder="Select organisation type" label="Organisation type" onChange={(value) => update({ organisationType: value })} /></Field>
           <Field label="CAC registration no. (optional)"><input className="input-shell" value={data.cacRegistrationNumber} onChange={(event) => update({ cacRegistrationNumber: event.target.value })} placeholder="Registration number" /></Field>
           <Field label="Year established"><input required type="number" inputMode="numeric" min="1800" max={new Date().getFullYear()} className="input-shell" value={data.yearEstablished} onChange={(event) => update({ yearEstablished: event.target.value })} placeholder="e.g. 2015" /></Field>
         </>}
@@ -195,7 +207,7 @@ export function InstitutionRegistrationWizard() {
         {activeStep.kind === "location" && <>
           <Field label="Office address"><textarea required autoComplete="street-address" className="input-shell min-h-20 resize-y" value={data.officeAddress} onChange={(event) => update({ officeAddress: event.target.value })} placeholder="Street address" /></Field>
           <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2"><Field label="State"><input required autoComplete="address-level1" className="input-shell" value={data.state} onChange={(event) => update({ state: event.target.value })} placeholder="State" /></Field><Field label="LGA"><input required autoComplete="address-level2" className="input-shell" value={data.lga} onChange={(event) => update({ lga: event.target.value })} placeholder="Local Government Area" /></Field></div>
-          <Field label="Organisation logo" hint="Optional"><input type="file" accept="image/*" className="input-shell file:mr-3 file:rounded-full file:border-0 file:bg-[#edf1e9] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-[#35543a]" onChange={async (event) => { const file = event.target.files?.[0]; if (file) { try { setLogo(await readAsDataUrl(file)); } catch { setError("We could not read the logo file."); } } }} /></Field>
+          <Field label="Organisation logo" hint="Optional"><input type="file" accept="image/*" className="input-shell file:mr-3 file:rounded-full file:border-0 file:bg-[#edf1e9] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-[#35543a]" onChange={async (event) => { const file = event.target.files?.[0]; if (file) { try { setLogo(await readAsDataUrl(file)); } catch { notifyToast("error", "We could not read the logo file."); } } }} /></Field>
           {logo && <div className="flex items-center gap-2 text-xs text-[#547253]"><Check size={14} /> Logo selected</div>}
         </>}
         {activeStep.kind === "services" && <fieldset className="space-y-2 sm:col-span-2"><legend className="mb-2 text-xs font-semibold text-[#465244]">Select all that apply</legend>{categories.map((category) => <label key={category} className={`flex cursor-pointer items-start gap-3 rounded-2xl p-3 transition-colors ${data.categories.includes(category) ? "bg-[#edf2e9]" : "bg-[#f7f8f5] hover:bg-[#f0f2ec]"}`}><input type="checkbox" checked={data.categories.includes(category)} onChange={() => toggleCategory(category)} className="mt-0.5 h-4 w-4 accent-[#416244]" /><span><span className="block text-sm font-semibold text-[#304032]">{category}</span><span className="mt-0.5 block text-xs leading-5 text-[#727b70]">{categorySummary(category)}</span></span></label>)}</fieldset>}
@@ -215,15 +227,15 @@ export function InstitutionRegistrationWizard() {
           <p className="text-xs leading-5 text-[#697268]">Add the requested file. Uploaded evidence stays in this browser demo and is included with your submission.</p>
           <UploadSlot title={activeStep.title} description={activeStep.documentDescription || "Choose an applicable document"} required={activeStep.documentRequired} files={documents.filter((item) => item.category === activeStep.documentCategory)} onChange={(files) => addFiles(files, activeStep.documentCategory!)} onRemove={removeFile} />
         </div>}
-        {activeStep.kind === "review" && <div className="sm:col-span-2"><Review data={data} documents={documents} logo={Boolean(logo)} agreed={data.agreed} onAgree={(agreed) => update({ agreed })} /></div>}
+        {activeStep.kind === "review" && <div className="sm:col-span-2"><Review data={data} documents={documents} logo={Boolean(logo)} agreed={data.agreed} onAgree={(agreed) => update({ agreed })} policyAgreed={data.policyAgreed} onPolicyAgree={(policyAgreed) => update({ policyAgreed })} onOpenPolicy={() => setPolicyOpen(true)} /></div>}
       </div>
 
-      {error && <div role="alert" className="rounded-xl bg-[#fbefeb] px-3.5 py-3 text-sm leading-5 text-[#9a493c]">{error}</div>}
       <div className="flex items-center justify-between gap-3 pt-2">
         <button type="button" onClick={back} disabled={stepIndex === 0 || isSubmitting} className="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold text-[#5e6c5d] transition hover:bg-[#f1f3ee] disabled:invisible"><ArrowLeft size={16} /> Back</button>
         {activeStep.kind === "review" ? <button type="submit" disabled={isSubmitting} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#244b35] px-5 text-sm font-semibold text-white transition hover:bg-[#193d2b] disabled:opacity-60">{isSubmitting ? "Submitting…" : "Submit for verification"}<Check size={16} /></button> : <button type="submit" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#244b35] px-5 text-sm font-semibold text-white transition hover:bg-[#193d2b]">Next<ArrowRight size={16} /></button>}
       </div>
     </form>
+    <PrivacyPolicyModal open={policyOpen} onClose={() => setPolicyOpen(false)} />
   </div>;
 }
 
@@ -247,14 +259,15 @@ function ServiceInput({ field, value, onChange }: { field: FieldSpec; value: str
 function UploadSlot({ title, description, required = false, files, onChange, onRemove }: { title: string; description: string; required?: boolean; files: InstitutionVerificationDocument[]; onChange: (files: FileList | null) => void; onRemove: (id: string) => void }) {
   return <section className="rounded-2xl bg-[#f6f7f3] p-3.5"><div className="flex items-start gap-2"><UploadCloud size={17} className="mt-0.5 shrink-0 text-[#547253]" /><div><h3 className="text-xs font-semibold text-[#354237]">{title}{required && <span className="text-[#a04d3e]"> *</span>}</h3><p className="mt-0.5 text-[10px] leading-4 text-[#7b8478]">{description}</p></div></div><input type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" onChange={(event) => onChange(event.target.files)} className="mt-2 w-full text-[10px] text-[#627060] file:mr-2 file:rounded-full file:border-0 file:bg-white file:px-3 file:py-2 file:text-[10px] file:font-semibold file:text-[#35543a]" />{files.map((file) => <div key={file.id} className="mt-2 flex items-center gap-2 rounded-lg bg-white px-2.5 py-2 text-xs"><FileText size={14} className="shrink-0 text-[#71866d]" /><span className="min-w-0 flex-1 truncate">{file.name}</span><button type="button" onClick={() => onRemove(file.id)} className="rounded px-1.5 py-1 text-[#8b5146] hover:bg-[#fbefeb]">Remove</button></div>)}</section>;
 }
-function Review({ data, documents, logo, agreed, onAgree }: { data: WizardData; documents: InstitutionVerificationDocument[]; logo: boolean; agreed: boolean; onAgree: (agreed: boolean) => void }) {
+function Review({ data, documents, logo, agreed, onAgree, policyAgreed, onPolicyAgree, onOpenPolicy }: { data: WizardData; documents: InstitutionVerificationDocument[]; logo: boolean; agreed: boolean; onAgree: (agreed: boolean) => void; policyAgreed: boolean; onPolicyAgree: (agreed: boolean) => void; onOpenPolicy: () => void }) {
   return <div className="grid gap-2 text-xs sm:grid-cols-2">
     <ReviewSection title="Organisation">{[["Name", data.organisationName], ["Type", data.organisationType], ["Email", data.officialEmail], ["Phone", data.officialPhone]]}</ReviewSection>
     <ReviewSection title="Services">{data.categories.map((category) => ["Selected", category] as [string, string])}</ReviewSection>
     <ReviewSection title="Representative">{[["Name", data.representative.fullName], ["Title", data.representative.jobTitle], ["Email", data.representative.email], ["Phone", data.representative.phone]]}</ReviewSection>
     <ReviewSection title="Documents">{[["Files added", String(documents.length)], ["Logo", logo ? "Selected" : "Not provided"]]}</ReviewSection>
     <div className="rounded-xl bg-[#f3f5ef] p-2.5 text-[11px] leading-4 text-[#667162] sm:col-span-2">Your profile will be saved as <strong>Pending Verification</strong>. Use Back to review or edit the details in each step.</div>
-    <label className="flex items-start gap-2 px-1 text-[11px] leading-4 text-[#5d685d] sm:col-span-2"><input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#416244]" /><span>I am authorised to submit these organisation details and verification documents.</span></label>
+    <label className="auth-consent-check sm:col-span-2" htmlFor="institution-authority"><input id="institution-authority" type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} /><span className="auth-consent-box" aria-hidden="true">{agreed && <Check size={14} strokeWidth={2.6} />}</span><span className="text-[11px] leading-4 text-[#5d685d]">I am authorised to submit these organisation details and verification documents.</span></label>
+    <div className="auth-consent-row sm:col-span-2"><label className="auth-consent-check" htmlFor="institution-policy"><input id="institution-policy" type="checkbox" checked={policyAgreed} onChange={(event) => onPolicyAgree(event.target.checked)} /><span className="auth-consent-box" aria-hidden="true">{policyAgreed && <Check size={14} strokeWidth={2.6} />}</span><span>I agree to the</span></label><button type="button" className="auth-policy-link" onClick={onOpenPolicy}>Privacy Policy and Data Use Terms</button><span className="auth-consent-period">for JARI.</span></div>
   </div>;
 }
 function ReviewSection({ title, children }: { title: string; children: Array<[string, string]> }) { return <section className="min-w-0 rounded-xl bg-[#f6f7f3] p-2.5"><h3 className="mb-1.5 font-semibold text-[#354237]">{title}</h3><dl className="space-y-1">{children.map(([label, value]) => <div key={`${label}-${value}`} className="grid grid-cols-[4.5rem_1fr] gap-2"><dt className="text-[#7b8478]">{label}</dt><dd className="break-words text-[#354237]">{value}</dd></div>)}</dl></section>; }

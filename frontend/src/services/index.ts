@@ -70,6 +70,9 @@ import {
     deleteHealthIncident,
     saveKycApplication as simSaveKycApplication,
     saveVaccinationRecords,
+    getFarmerOnboarding as simGetFarmerOnboarding,
+    initializeFarmerOnboarding as simInitializeFarmerOnboarding,
+    saveFarmerOnboarding as simSaveFarmerOnboarding,
 } from "@/lib/simulated-data";
 import type {
     ExpenseEntry,
@@ -325,6 +328,56 @@ export const mockApi = {
 };
 
 export type MockApi = typeof mockApi;
+
+export const getFarmerOnboarding = simGetFarmerOnboarding;
+export const initializeFarmerOnboarding = simInitializeFarmerOnboarding;
+export const saveFarmerOnboarding = simSaveFarmerOnboarding;
+
+export function getFarmerFarmProfile(userId: string, ownerName = "", phone = ""): SavedFarmProfile {
+    const onboarding = simGetFarmerOnboarding(userId);
+    if (!onboarding?.farm) return getSavedFarmProfile();
+    const farm = onboarding.farm;
+    const saved = getSavedFarmProfile();
+    const yearStarted = String(farm.yearStarted ?? "");
+    return {
+        ...saved,
+        farmName: String(farm.name ?? saved.farmName),
+        ownerName: ownerName || saved.ownerName,
+        phone: phone || saved.phone,
+        community: String(farm.community ?? onboarding.profile?.community ?? saved.community),
+        lga: String(farm.lga ?? onboarding.profile?.lga ?? saved.lga),
+        state: String(farm.state ?? onboarding.profile?.state ?? saved.state),
+        establishmentDate: /^\d{4}$/.test(yearStarted) ? `${yearStarted}-01-01` : saved.establishmentDate,
+        operationType: String(farm.production ?? saved.operationType),
+        productionSystem: String(farm.system ?? saved.productionSystem),
+        numberOfHouses: String(farm.houseCount ?? saved.numberOfHouses),
+        waterSource: String(farm.water ?? saved.waterSource),
+    };
+}
+
+export async function saveFarmerFarmProfile(userId: string, profile: SavedFarmProfile): Promise<SavedFarmProfile> {
+    await saveFarmProfile(profile);
+    const onboarding = userId ? simGetFarmerOnboarding(userId) : null;
+    if (onboarding?.farm) {
+        const existingFarm = onboarding.farm;
+        simSaveFarmerOnboarding(userId, {
+            profile: { ...(onboarding.profile ?? { state: "", lga: "", community: "" }), state: profile.state, lga: profile.lga, community: profile.community },
+            farm: {
+                ...existingFarm,
+                name: profile.farmName,
+                community: profile.community,
+                lga: profile.lga,
+                state: profile.state,
+                yearStarted: profile.establishmentDate.slice(0, 4),
+                production: profile.operationType,
+                system: profile.productionSystem,
+                houseCount: profile.numberOfHouses,
+                water: profile.waterSource,
+            },
+        });
+    }
+    return profile;
+}
 
 // ============================================================================
 // WRAPPED EXPORTS (REAL BACKEND FIRST + REACTIVE UI SYNC)
@@ -773,4 +826,5 @@ export type {
     InstitutionCategory,
     InstitutionRegistrationRecord,
     InstitutionVerificationDocument,
+    FarmerOnboardingRecord,
 } from "@/lib/simulated-data";

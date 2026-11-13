@@ -1,4 +1,5 @@
 "use client";
+import { JariSelect } from "@/components/ui/jari-select";
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
@@ -363,12 +364,12 @@ function InstitutionSection({ section, snapshot, status, totals, requests, reque
           <form onSubmit={addRequest} className="mt-4 grid gap-3 sm:grid-cols-2">
             <label className="label-text">
               Purpose
-              <select value={request.purpose} onChange={(event) => setRequest({ ...request, purpose: event.target.value })}>
+              <JariSelect value={request.purpose} onChange={(event) => setRequest({ ...request, purpose: event.target.value })}>
                 <option>Finance discussion</option>
                 <option>Insurance discussion</option>
                 <option>Farm records clarification</option>
                 <option>Advisory follow-up</option>
-              </select>
+              </JariSelect>
             </label>
             <label className="label-text sm:col-span-2">
               Message

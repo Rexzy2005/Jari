@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowRight, Building2, Eye, EyeOff, Phone, ShieldCheck, Sprout } from "lucide-react";
 import { loginWithBackend } from "@/lib/auth";
 import { notifyToast } from "@/lib/toast";
@@ -15,21 +15,25 @@ const demoAccounts = [
 
 export default function LoginPage() {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState({ phone: "", password: "" });
   const [selectedDemo, setSelectedDemo] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (field: keyof typeof form, value: string) => {
     setForm((previous) => ({ ...previous, [field]: value }));
     setSelectedDemo("");
-    if (error) setError("");
   };
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError("");
+    const invalidField = formRef.current?.querySelector(":invalid") as HTMLInputElement | null;
+    if (invalidField) {
+      notifyToast("error", invalidField.validationMessage);
+      invalidField.focus();
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -43,7 +47,7 @@ export default function LoginPage() {
       router.push(target);
     } catch (loginError) {
       const message = loginError instanceof Error ? loginError.message : "Login failed.";
-      setError(message); notifyToast("error", message);
+      notifyToast("error", message);
     } finally {
       setIsSubmitting(false);
     }
@@ -73,7 +77,6 @@ export default function LoginPage() {
               onClick={() => {
                 setForm({ phone: account.phone, password: account.password });
                 setSelectedDemo(account.phone);
-                setError("");
               }}
               aria-pressed={selectedDemo === account.phone}
               className={`flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2 text-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#76916a] sm:justify-start sm:px-2 ${selectedDemo === account.phone ? "border-[#78916e] bg-[#edf3e9]" : "border-white bg-white hover:border-[#dce5d7] hover:bg-[#fbfcfa]"}`}
@@ -85,12 +88,12 @@ export default function LoginPage() {
         </div>
       </section>
 
-      <form className="space-y-3" onSubmit={onSubmit}>
+      <form ref={formRef} noValidate className="space-y-3" onSubmit={onSubmit}>
         <div>
           <label htmlFor="phone" className="label-text">Phone number</label>
           <div className="relative">
             <Phone aria-hidden="true" size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#879381]" />
-            <input id="phone" type="tel" autoComplete="tel" className="input-shell pl-10" placeholder="0803 000 0000" value={form.phone} onChange={(event) => handleChange("phone", event.target.value)} />
+            <input id="phone" type="tel" autoComplete="tel" required className="input-shell pl-10" placeholder="0803 000 0000" value={form.phone} onChange={(event) => handleChange("phone", event.target.value)} />
           </div>
         </div>
 
@@ -101,6 +104,7 @@ export default function LoginPage() {
               id="password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
+              required
               className="input-shell pr-11"
               placeholder="Enter your password"
               value={form.password}
@@ -120,8 +124,6 @@ export default function LoginPage() {
         <div className="flex items-center justify-between gap-3 pt-1 text-xs">
           <Link href="/forgot-password" className="font-semibold text-[#496b50] transition-colors hover:text-[#244a35]">Forgot password?</Link>
         </div>
-
-        {error && <div role="alert" className="rounded-xl bg-[#fbefeb] px-3.5 py-3 text-sm text-[#9a493c]">{error}</div>}
 
         <button
           type="submit"

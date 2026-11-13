@@ -4,6 +4,8 @@ JARI is a poultry-farm intelligence and finance platform. It helps farmers organ
 
 The repository contains a Next.js frontend and a FastAPI backend. The frontend currently includes browser-local simulated workflows; the presence of a backend API client does not mean every screen is connected to the live API yet.
 
+JARI's shared product model is **Farmer → Farm → Houses → Flock batches**. Farmer profile location is separate from farm location, and farm-level summaries aggregate underlying house and batch records. Inventory is an independent capability that can optionally connect supplies and consumption to batches. See [product and data architecture](docs/architecture.md) and the ordered [development plans](docs/development-plans/) for the canonical architecture and module scope. The plans distinguish current simulated implementation from future work.
+
 ## Project structure
 
 ```text

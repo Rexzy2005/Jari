@@ -6,6 +6,9 @@ import { ArrowRight, Bird, ClipboardCheck, MapPin, Sprout, Wallet, Warehouse, Wh
 import { defaultFarmProfile, getActivityRecords, getDashboardTotals, getFarmProfile, getKycApplication } from "@/services";
 import type { KycApplication } from "@/services";
 import type { ActivityRecord } from "@/services";
+import { getSavedSession } from "@/lib/auth";
+import { getFarmerOnboarding } from "@/services";
+import type { FarmerOnboardingRecord } from "@/services";
 
 const startCards = [
   { title: "Add your birds", detail: "Keep track of the birds you are raising.", href: "/birds", icon: Bird },
@@ -18,8 +21,14 @@ export default function DashboardPage() {
   const [application, setApplication] = useState<KycApplication | null>(null);
   const [totals, setTotals] = useState(getDashboardTotals());
   const [activity, setActivity] = useState<ActivityRecord[]>([]);
+  const [incompleteSetup, setIncompleteSetup] = useState(false);
+  const [onboardingAccount, setOnboardingAccount] = useState<FarmerOnboardingRecord | null>(null);
   useEffect(() => {
     const sync = () => {
+      const session = getSavedSession();
+      const onboarding = session?.role === "farmer" ? getFarmerOnboarding(session.id) : null;
+      setOnboardingAccount(onboarding);
+      setIncompleteSetup(Boolean(onboarding && !onboarding.completed));
       setFarm(getFarmProfile());
       setApplication(getKycApplication());
       setTotals(getDashboardTotals());
@@ -29,6 +38,22 @@ export default function DashboardPage() {
     window.addEventListener("jari:mock-data-changed", sync);
     return () => window.removeEventListener("jari:mock-data-changed", sync);
   }, []);
+  if (incompleteSetup) return <section className="mx-auto max-w-3xl rounded-3xl border border-[#e1e8dc] bg-white p-6 shadow-sm sm:p-10">
+    <p className="text-[10px] font-bold uppercase tracking-[.16em] text-emerald-700">Your account is ready</p>
+    <h1 className="mt-3 max-w-xl font-serif text-3xl leading-tight text-slate-900 sm:text-4xl">Let&apos;s set up your farm space.</h1>
+    <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Complete your farmer profile and register your primary farm to activate your dashboard. Your progress is saved, and no operational figures are shown before they come from your records.</p>
+    <div className="mt-7 space-y-3">{["Farmer profile", "Primary farm details"].map((label, index) => <div key={label} className="flex items-center gap-3 rounded-2xl bg-[#f5f7f2] p-4"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-semibold text-emerald-800">{index + 1}</span><span className="text-sm font-medium text-slate-800">{label}</span></div>)}</div>
+    <Link href="/setup" className="mt-7 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#244b35] px-5 text-sm font-semibold text-white transition hover:bg-[#193d2b] sm:w-auto">Continue setup <ArrowRight size={16}/></Link>
+  </section>;
+  if (onboardingAccount?.completed) {
+    const farmName = String(onboardingAccount.farm?.name ?? "Your primary farm");
+    const farmLocation = [onboardingAccount.farm?.community, onboardingAccount.farm?.lga, onboardingAccount.farm?.state].filter(Boolean).join(", ");
+    return <div className="mx-auto max-w-4xl space-y-5">
+      <div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#587354]">Farmer workspace</p><h1 className="mt-2 font-serif text-3xl text-[#20291f]">Your farm is registered.</h1><p className="mt-2 text-sm text-[#737d70]">Your dashboard will fill in as you record real farm activity.</p></div>
+      <section className="rounded-3xl bg-[#244b35] p-6 text-white sm:p-8"><p className="text-xs font-semibold uppercase tracking-wider text-white/70">Primary farm</p><h2 className="mt-2 break-words font-serif text-3xl">{farmName}</h2><p className="mt-2 text-sm text-white/75">{farmLocation || "Farm location saved"}</p><p className="mt-5 text-sm">{onboardingAccount.farm?.production} · {onboardingAccount.farm?.operatingStatus}</p></section>
+      <section className="rounded-3xl border border-slate-200 bg-white p-6"><h2 className="text-lg font-semibold text-slate-900">Start adding farm records</h2><p className="mt-2 text-sm leading-6 text-slate-600">There are no flock, inventory, production or financial records in this account yet. Add information as it becomes available; JARI will not fill in estimates.</p><Link href="/feed" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#244b35] px-5 text-sm font-semibold text-white">Inventory setup <ArrowRight size={16}/></Link></section>
+    </div>;
+  }
   const farmLocation = [farm.community, farm.lga, farm.state].filter(Boolean).join(", ");
   const money = (value: number) => new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(value);
   const farmStats = [

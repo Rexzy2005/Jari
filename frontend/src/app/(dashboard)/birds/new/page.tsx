@@ -1,4 +1,5 @@
 "use client";
+import { JariSelect } from "@/components/ui/jari-select";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -80,7 +81,7 @@ export default function NewBirdsPage() {
 
                     <div>
                         <label className="label-text">Poultry type</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             required
                             value={form.poultryType}
@@ -89,7 +90,7 @@ export default function NewBirdsPage() {
                             <option>Broiler</option>
                             <option>Layer</option>
                             <option>Breeder</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>
@@ -104,13 +105,13 @@ export default function NewBirdsPage() {
 
                     <div>
                         <label className="label-text">Poultry house</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.house}
                             onChange={(event) => handleChange("house", event.target.value)}
                         >
                             {houses.map((house) => <option key={house.name}>{house.name}</option>)}
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>
@@ -159,14 +160,14 @@ export default function NewBirdsPage() {
 
                     <div>
                         <label className="label-text">Age unit</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.ageUnit}
                             onChange={(event) => handleChange("ageUnit", event.target.value)}
                         >
                             <option>Days</option>
                             <option>Weeks</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>

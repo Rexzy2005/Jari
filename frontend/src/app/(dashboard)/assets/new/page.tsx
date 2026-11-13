@@ -1,4 +1,5 @@
 "use client";
+import { JariSelect } from "@/components/ui/jari-select";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -66,7 +67,7 @@ export default function NewAssetPage() {
 
                     <div>
                         <label className="label-text">Ownership status</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.ownershipStatus}
                             onChange={(event) => handleChange("ownershipStatus", event.target.value)}
@@ -74,12 +75,12 @@ export default function NewAssetPage() {
                             <option>Owned</option>
                             <option>Leased</option>
                             <option>Rented</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>
                         <label className="label-text">Operational condition</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.operationalCondition}
                             onChange={(event) => handleChange("operationalCondition", event.target.value)}
@@ -87,7 +88,7 @@ export default function NewAssetPage() {
                             <option>Functional</option>
                             <option>Needs repair</option>
                             <option>Non-functional</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div className="md:col-span-2">

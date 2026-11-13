@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Activity, ArrowRight, CalendarDays, MapPin, Pencil, Sprout, Users, Warehouse } from "lucide-react";
-import { defaultFarmProfile, getFarmProfile, getPoultryHouses } from "@/services";
+import { Activity, ArrowRight, Bird, CalendarDays, Gauge, MapPin, Pencil, Sprout, Users, Warehouse } from "lucide-react";
+import { defaultFarmProfile, getFarmerFarmProfile, getFarmerOnboarding, getPoultryHouses } from "@/services";
+import { getSavedSession } from "@/lib/auth";
 
 function ProfileValue({ label, value }: { label: string; value?: string | number }) {
   return <div className="min-w-0 py-2"><dt className="text-[10px] font-semibold uppercase tracking-[.1em] text-[#869082]">{label}</dt><dd className="mt-1 break-words text-sm font-medium text-[#354237]">{value || "Not added yet"}</dd></div>;
@@ -12,11 +13,17 @@ function ProfileValue({ label, value }: { label: string; value?: string | number
 export default function FarmPage() {
   const [farm, setFarm] = useState(defaultFarmProfile);
   const [houseCount, setHouseCount] = useState(0);
+  const [onboardingFarm, setOnboardingFarm] = useState<Record<string, string | number | null> | null>(null);
 
   useEffect(() => {
     const sync = () => {
-      setFarm(getFarmProfile());
-      setHouseCount(getPoultryHouses().length);
+      const session = getSavedSession();
+      const onboarding = session?.role === "farmer" ? getFarmerOnboarding(session.id) : null;
+      const savedFarm = getFarmerFarmProfile(session?.id ?? "", session?.fullName ?? "", session?.phone ?? "");
+      setFarm(savedFarm);
+      setOnboardingFarm(onboarding?.farm ?? null);
+      const profileHouseCount = Number.parseInt(savedFarm.numberOfHouses, 10) || 0;
+      setHouseCount(Math.max(profileHouseCount, getPoultryHouses().length));
     };
     sync();
     window.addEventListener("jari:mock-data-changed", sync);
@@ -46,7 +53,7 @@ export default function FarmPage() {
       </section>
 
       <section aria-label="Farm summary" className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        {[{ label: "Farm houses", value: houseCount, unit: "registered", icon: Warehouse }, { label: "Farm workers", value: farm.numberOfWorkers || "0", unit: "listed on profile", icon: Users }, { label: "Established", value: farm.establishmentDate ? new Date(farm.establishmentDate).getFullYear() : "Not set", unit: "year", icon: CalendarDays }].map(({ label, value, unit, icon: Icon }) => <article key={label} className="rounded-[1.2rem] bg-white p-4 sm:rounded-[1.35rem] sm:p-5"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#edf2e8] text-[#55734f]"><Icon size={15} /></span><p className="mt-4 text-[10px] font-semibold text-[#788174] sm:text-xs">{label}</p><p className="mt-1 font-serif text-2xl font-medium text-[#29352a]">{value}</p><p className="mt-0.5 text-[9px] text-[#899184]">{unit}</p></article>)}
+        {[{ label: "Farm houses", value: houseCount, unit: "on this farm", icon: Warehouse }, { label: "Current birds", value: onboardingFarm?.currentBirds ?? "Not added", unit: "reported in setup", icon: Bird }, { label: "Bird capacity", value: onboardingFarm?.capacity ?? "Not added", unit: "farm capacity", icon: Gauge }, { label: "Farm workers", value: farm.numberOfWorkers || "0", unit: "listed on profile", icon: Users }, { label: "Established", value: farm.establishmentDate ? new Date(farm.establishmentDate).getFullYear() : "Not set", unit: "year", icon: CalendarDays }].map(({ label, value, unit, icon: Icon }) => <article key={label} className="rounded-[1.2rem] bg-white p-4 sm:rounded-[1.35rem] sm:p-5"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#edf2e8] text-[#55734f]"><Icon size={15} /></span><p className="mt-4 text-[10px] font-semibold text-[#788174] sm:text-xs">{label}</p><p className="mt-1 font-serif text-2xl font-medium text-[#29352a]">{value}</p><p className="mt-0.5 text-[9px] text-[#899184]">{unit}</p></article>)}
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1.1fr_.9fr]">
@@ -58,6 +65,8 @@ export default function FarmPage() {
             <ProfileValue label="Community" value={farm.community} />
             <ProfileValue label="Local government" value={farm.lga} />
             <ProfileValue label="State" value={farm.state} />
+            <ProfileValue label="Farm address" value={String(onboardingFarm?.address ?? "")} />
+            <ProfileValue label="Farm ownership" value={String(onboardingFarm?.ownership ?? "")} />
             <ProfileValue label="Establishment date" value={farm.establishmentDate || undefined} />
           </dl>
         </article>
@@ -66,6 +75,8 @@ export default function FarmPage() {
           <div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#82907c]">Farm management</p><h3 className="mt-1 font-serif text-xl font-medium text-[#29352a]">Housing and biosecurity</h3></div>
           <dl className="mt-4 grid grid-cols-2 gap-x-4 divide-y divide-[#eef0eb]">
             <ProfileValue label="Production system" value={farm.productionSystem} />
+            <ProfileValue label="Operation type" value={farm.operationType} />
+            <ProfileValue label="Operating status" value={String(onboardingFarm?.operatingStatus ?? "")} />
             <ProfileValue label="Water source" value={farm.waterSource} />
           </dl>
           <div className="mt-4"><p className="text-[10px] font-semibold uppercase tracking-[.1em] text-[#869082]">Biosecurity measures</p><div className="mt-2 flex flex-wrap gap-2">{farm.biosecurity?.length ? farm.biosecurity.map((measure) => <span key={measure} className="rounded-full bg-[#edf2e8] px-3 py-1.5 text-[10px] font-medium text-[#4e6849]">{measure}</span>) : <p className="text-xs text-[#788174]">Add the biosecurity measures used on your farm.</p>}</div></div>

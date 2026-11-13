@@ -1,4 +1,5 @@
 "use client";
+import { JariSelect } from "@/components/ui/jari-select";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -39,24 +40,24 @@ export default function NewProductionPage() {
                 <div className="grid gap-5 md:grid-cols-2">
                     <div>
                         <label className="label-text">Flock</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.flock}
                             onChange={(event) => handleChange("flock", event.target.value)}
                         >
                             {getFlockRecords().filter((flock) => flock.status === "Active").map((flock) => <option key={flock.name}>{flock.name}</option>)}
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>
                         <label className="label-text">Production type</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.productionType}
                             onChange={(event) => handleChange("productionType", event.target.value)}
                         >
                             <option>Broiler</option><option>Layer</option><option>Breeder</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>

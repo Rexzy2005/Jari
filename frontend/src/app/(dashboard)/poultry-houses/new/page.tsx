@@ -1,4 +1,5 @@
 "use client";
+import { JariSelect } from "@/components/ui/jari-select";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -59,7 +60,7 @@ export default function NewPoultryHousePage() {
 
                     <div>
                         <label className="label-text">Housing system</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.housingSystem}
                             onChange={(event) => handleChange("housingSystem", event.target.value)}
@@ -68,7 +69,7 @@ export default function NewPoultryHousePage() {
                             <option>Battery cage</option>
                             <option>Free range</option>
                             <option>Other</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>
@@ -86,7 +87,7 @@ export default function NewPoultryHousePage() {
 
                     <div>
                         <label className="label-text">Water source</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.waterSource}
                             onChange={(event) => handleChange("waterSource", event.target.value)}
@@ -96,12 +97,12 @@ export default function NewPoultryHousePage() {
                             <option>Municipal supply</option>
                             <option>Surface water</option>
                             <option>Other</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div>
                         <label className="label-text">Ventilation type</label>
-                        <select
+                        <JariSelect
                             className="input-shell"
                             value={form.ventilation}
                             onChange={(event) => handleChange("ventilation", event.target.value)}
@@ -109,7 +110,7 @@ export default function NewPoultryHousePage() {
                             <option>Natural ventilation</option>
                             <option>Mechanical ventilation</option>
                             <option>Hybrid system</option>
-                        </select>
+                        </JariSelect>
                     </div>
 
                     <div className="flex items-end">
