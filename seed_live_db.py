@@ -320,5 +320,4 @@ def seed_farmer_data(phone: str, full_name: str, farm_name: str):
     print(f"Seeding completed successfully for {user.phone} ({user.full_name})!")
 
 seed_farmer_data("08030000000", "Amina Daniel", "Sunrise Integrated Poultry")
-seed_farmer_data("+2348133153568", "Pererat Timothy", "Timothy Integrated Poultry Farm")
 db.close()

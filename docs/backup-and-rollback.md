@@ -1,4 +1,6 @@
-# JARI VPS Deployment, Backup & Rollback Runbook
+# JARI VPS Deployment, Backup & Rollback Runbook (Legacy)
+
+This runbook documents the previous VPS deployment. The current backend deployment target is Render; use [backend-render-deployment.md](backend-render-deployment.md) for the active deployment and data migration procedure. Keep this runbook only for operating or retiring the existing VPS stack.
 
 ## 1. Architecture Overview
 - **VPS Host**: `72.61.97.210` (Ubuntu 24.04.3 LTS)

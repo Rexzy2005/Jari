@@ -25,6 +25,8 @@ scripts/testing/           Standalone API and production-check scripts
 
 Docker is optional for frontend-only work. It is the easiest way to run PostgreSQL locally and is used by the provided backend Compose configuration.
 
+The backend has a free-plan Render configuration for demos and temporary evaluation, with PostgreSQL hosted by Supabase. Supabase Free projects have a 500 MB database quota, can pause after a week of low activity, and do not include downloadable automatic backups. See [Backend deployment on Render](docs/backend-render-deployment.md) and [Backend database migrations](backend/alembic/README.md) before connecting a project, especially if migrating existing VPS data.
+
 ## Frontend setup
 
 Open a terminal at the repository root, then:
@@ -36,7 +38,7 @@ Copy-Item .env.example .env.local
 npm run dev
 ```
 
-The frontend is available at [http://localhost:3000](http://localhost:3000). The local environment template points the API client at the local backend (`http://localhost:8000/api/v1`). You can edit `.env.local` if your backend uses a different address. Restart the Next.js dev server after changing environment variables.
+The frontend is available at [http://localhost:3000](http://localhost:3000). The local environment template points the API client at the local backend (`http://localhost:8000/api/v1`). Set `NEXT_PUBLIC_API_URL` in the frontend hosting environment to the deployed backend URL (for Render, `https://<service>.onrender.com/api/v1`). Restart or redeploy the frontend after changing environment variables.
 
 The main demo workflows currently use simulated records in browser `localStorage`. They can run without a local backend; backend API wiring is not yet complete across all screens. Demo records stay in that browser and do not represent production data.
 
@@ -88,11 +90,8 @@ If PowerShell blocks activation, allow it for the current terminal only with `Se
 Review `backend/.env` before starting the API. For local development, set at least:
 
 ```dotenv
-ENVIRONMENT=development
-DEBUG=true
 DATABASE_URL=postgresql+psycopg://jari_user:jari_dev_password@localhost:5432/jari_db
 SECRET_KEY=replace_with_a_local_random_secret_of_at_least_32_characters
-API_V1_STR=/api/v1
 BACKEND_CORS_ORIGINS=["http://localhost:3000"]
 ```
 
@@ -157,7 +156,7 @@ Database localhost:5432
 
 The frontend has simulated services and API helpers, but its current dashboard/auth workflows still use local demo data. A local API URL alone does not switch all frontend pages to PostgreSQL-backed behavior.
 
-## Backend Docker Compose deployment
+## Alternative self-hosted Docker Compose deployment
 
 `backend/docker-compose.prod.yml` is configured for a production-style deployment: it starts PostgreSQL and the API, runs migrations from the API container entrypoint, and keeps database and uploads in named Docker volumes. It binds the API to `127.0.0.1:8000` on the host.
 

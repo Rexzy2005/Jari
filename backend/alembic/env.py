@@ -17,8 +17,13 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Override alembic.ini url with settings.DATABASE_URL
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# ConfigParser treats percent signs in URL-encoded Supabase credentials as
+# interpolation markers. Doubling them here preserves the connection URI when
+# Alembic reads the option back.
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.DATABASE_URL.get_secret_value().replace("%", "%%"),
+)
 
 
 def run_migrations_offline() -> None:
