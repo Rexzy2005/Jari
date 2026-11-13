@@ -68,11 +68,20 @@ export function InstitutionRegistrationWizard() {
 
   const steps = useMemo<WizardStep[]>(() => {
     const selected = serviceSteps.filter((step) => data.categories.includes(step.category));
+    const servicePages = selected.flatMap((service) => {
+      const pageCount = Math.ceil(service.fields.length / 3);
+      return Array.from({ length: pageCount }, (_, index) => ({
+        ...service,
+        id: `${service.id}-${index + 1}`,
+        title: pageCount > 1 ? `${service.title} (${index + 1} of ${pageCount})` : service.title,
+        fields: service.fields.slice(index * 3, (index + 1) * 3),
+      }));
+    });
     return [
       { id: "organisation", title: "Organisation information", eyebrow: "About your organisation", kind: "organisation" },
       { id: "location", title: "Official contact and location", eyebrow: "Where we can reach you", kind: "location" },
       { id: "services", title: "Institution category and services", eyebrow: "Choose every service you offer", kind: "services" },
-      ...selected.map((service) => ({ id: service.id, title: service.title, eyebrow: service.category, kind: "service" as const, service })),
+      ...servicePages.map((service) => ({ id: service.id, title: service.title, eyebrow: service.category, kind: "service" as const, service })),
       { id: "representative", title: "Authorised representative", eyebrow: "Who is submitting this profile", kind: "representative" },
       { id: "documents", title: "Verification documents", eyebrow: "Evidence for the services selected", kind: "documents" },
       { id: "review", title: "Review and submit", eyebrow: "Check your information", kind: "review" },
@@ -150,18 +159,18 @@ export function InstitutionRegistrationWizard() {
     } finally { setIsSubmitting(false); }
   };
 
-  return <div>
-    <div className="mb-5">
+  return <div className="auth-institution-wizard">
+    <div className="auth-wizard-heading mb-4">
       <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#547253]">Institution registration · Step {stepIndex + 1} of {steps.length}</p>
       <h2 className="mt-2 font-serif text-2xl font-medium tracking-[-.03em] text-[#20291f] sm:text-3xl">{activeStep.title}</h2>
       <p className="mt-1.5 text-sm leading-5 text-[#697268]">{activeStep.eyebrow}</p>
     </div>
-    <div aria-label={`Step ${stepIndex + 1} of ${steps.length}`} className="mb-6 flex gap-1.5" role="progressbar" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={stepIndex + 1}>
+    <div aria-label={`Step ${stepIndex + 1} of ${steps.length}`} className="auth-wizard-progress mb-4 flex gap-1.5" role="progressbar" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={stepIndex + 1}>
       {steps.map((step, index) => <span key={step.id} title={step.title} className={`h-1.5 flex-1 rounded-full transition-colors ${index <= stepIndex ? "bg-[#547253]" : "bg-[#e7ebe3]"}`} />)}
     </div>
 
-    <form ref={formRef} onSubmit={activeStep.kind === "review" ? submit : next} className="space-y-4" noValidate={false}>
-      <div className="min-h-[270px] space-y-4">
+    <form ref={formRef} onSubmit={activeStep.kind === "review" ? submit : next} className="space-y-3" noValidate={false}>
+      <div className="min-h-0 space-y-3">
         {activeStep.kind === "organisation" && <>
           <Field label="Organisation name"><input required autoComplete="organization" className="input-shell" value={data.organisationName} onChange={(event) => update({ organisationName: event.target.value })} placeholder="Registered organisation name" /></Field>
           <Field label="Organisation type"><select required className="input-shell" value={data.organisationType} onChange={(event) => update({ organisationType: event.target.value })}><option value="">Choose organisation type</option>{organisationTypes.map((type) => <option key={type}>{type}</option>)}</select></Field>
@@ -228,13 +237,13 @@ function UploadSlot({ title, description, required = false, files, onChange, onR
   return <section className="rounded-2xl bg-[#f6f7f3] p-3.5"><div className="flex items-start gap-2"><UploadCloud size={17} className="mt-0.5 shrink-0 text-[#547253]" /><div><h3 className="text-xs font-semibold text-[#354237]">{title}{required && <span className="text-[#a04d3e]"> *</span>}</h3><p className="mt-0.5 text-[10px] leading-4 text-[#7b8478]">{description}</p></div></div><input type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" onChange={(event) => onChange(event.target.files)} className="mt-2 w-full text-[10px] text-[#627060] file:mr-2 file:rounded-full file:border-0 file:bg-white file:px-3 file:py-2 file:text-[10px] file:font-semibold file:text-[#35543a]" />{files.map((file) => <div key={file.id} className="mt-2 flex items-center gap-2 rounded-lg bg-white px-2.5 py-2 text-xs"><FileText size={14} className="shrink-0 text-[#71866d]" /><span className="min-w-0 flex-1 truncate">{file.name}</span><button type="button" onClick={() => onRemove(file.id)} className="rounded px-1.5 py-1 text-[#8b5146] hover:bg-[#fbefeb]">Remove</button></div>)}</section>;
 }
 function Review({ data, documents, logo, agreed, onAgree }: { data: WizardData; documents: InstitutionVerificationDocument[]; logo: boolean; agreed: boolean; onAgree: (agreed: boolean) => void }) {
-  return <div className="space-y-3 text-xs">
-    <ReviewSection title="Organisation">{[["Name", data.organisationName], ["Type", data.organisationType], ["Registration number", data.cacRegistrationNumber || "Not provided"], ["Established", data.yearEstablished], ["Email", data.officialEmail], ["Phone", data.officialPhone], ["Website", data.website || "Not provided"], ["Address", [data.officeAddress, data.lga, data.state].filter(Boolean).join(", ")], ["Logo", logo ? "Selected" : "Not provided"]]}</ReviewSection>
-    <ReviewSection title="Services">{data.categories.flatMap((category) => serviceSteps.filter((step) => step.category === category).flatMap((step) => step.fields.map((field) => [`${category}: ${field.label}`, data.services[category]?.[field.key] || "Not provided"] as [string, string])))}</ReviewSection>
-    <ReviewSection title="Authorised representative">{[["Name", data.representative.fullName], ["Title", data.representative.jobTitle], ["Email", data.representative.email], ["Phone", data.representative.phone]]}</ReviewSection>
-    <ReviewSection title="Verification documents">{documents.map((document) => [document.category, document.name])}</ReviewSection>
-    <div className="rounded-xl bg-[#f3f5ef] p-3 text-[11px] leading-5 text-[#667162]">Your profile will be saved as <strong>Pending Verification</strong>. This is a browser demo submission; it does not contact JARI or a regulator.</div>
-    <label className="flex items-start gap-2 text-[11px] leading-5 text-[#5d685d]"><input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#416244]" /><span>I am authorised to submit these organisation details and verification documents.</span></label>
+  return <div className="grid gap-2 text-xs sm:grid-cols-2">
+    <ReviewSection title="Organisation">{[["Name", data.organisationName], ["Type", data.organisationType], ["Email", data.officialEmail], ["Phone", data.officialPhone]]}</ReviewSection>
+    <ReviewSection title="Services">{data.categories.map((category) => ["Selected", category] as [string, string])}</ReviewSection>
+    <ReviewSection title="Representative">{[["Name", data.representative.fullName], ["Title", data.representative.jobTitle], ["Email", data.representative.email], ["Phone", data.representative.phone]]}</ReviewSection>
+    <ReviewSection title="Documents">{[["Files added", String(documents.length)], ["Logo", logo ? "Selected" : "Not provided"]]}</ReviewSection>
+    <div className="rounded-xl bg-[#f3f5ef] p-2.5 text-[11px] leading-4 text-[#667162] sm:col-span-2">Your profile will be saved as <strong>Pending Verification</strong>. Use Back to review or edit the details in each step.</div>
+    <label className="flex items-start gap-2 px-1 text-[11px] leading-4 text-[#5d685d] sm:col-span-2"><input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#416244]" /><span>I am authorised to submit these organisation details and verification documents.</span></label>
   </div>;
 }
-function ReviewSection({ title, children }: { title: string; children: Array<[string, string]> }) { return <section className="rounded-xl bg-[#f6f7f3] p-3"><h3 className="mb-2 font-semibold text-[#354237]">{title}</h3><dl className="space-y-1.5">{children.map(([label, value]) => <div key={label} className="grid grid-cols-[105px_1fr] gap-2"><dt className="text-[#7b8478]">{label}</dt><dd className="break-words text-[#354237]">{value}</dd></div>)}</dl></section>; }
+function ReviewSection({ title, children }: { title: string; children: Array<[string, string]> }) { return <section className="min-w-0 rounded-xl bg-[#f6f7f3] p-2.5"><h3 className="mb-1.5 font-semibold text-[#354237]">{title}</h3><dl className="space-y-1">{children.map(([label, value]) => <div key={`${label}-${value}`} className="grid grid-cols-[4.5rem_1fr] gap-2"><dt className="text-[#7b8478]">{label}</dt><dd className="break-words text-[#354237]">{value}</dd></div>)}</dl></section>; }

@@ -17,7 +17,7 @@ Because Render's pre-deploy command requires a paid web service, the free Bluepr
 5. After the first deploy, note the API's `onrender.com` URL. Set `NEXT_PUBLIC_API_URL` in the frontend hosting environment to `https://<render-service>.onrender.com/api/v1`, then redeploy the frontend.
 6. Verify `https://<render-service>.onrender.com/health`, `/docs`, and an authenticated API workflow before changing any custom domain or directing users to the new backend.
 
-Set `ENVIRONMENT=production`, `DATABASE_URL` to the Supabase Session pooler URI on port `5432` with `sslmode=require`, a private `SECRET_KEY`, and the exact HTTPS frontend origin in `BACKEND_CORS_ORIGINS`. The project-specific connection template is in [`backend/.env.production.example`](../backend/.env.production.example). Backend settings convert `postgresql://` to `postgresql+psycopg://`, matching the psycopg 3 dependency, and reject insecure/misconfigured production values at startup. The API binds to Render's `$PORT`; do not set a fixed public port.
+Set `ENVIRONMENT=production`, `DATABASE_URL` to the Supabase Session pooler URI on port `5432` with `sslmode=require`, a private `SECRET_KEY`, and the exact HTTPS frontend origin in `BACKEND_CORS_ORIGINS`. Enter that setting as one plain origin (for example, `https://jari-jet.vercel.app`) or as a JSON list when allowing multiple origins. The project-specific connection template is in [`backend/.env.production.example`](../backend/.env.production.example). Backend settings convert `postgresql://` to `postgresql+psycopg://`, matching the psycopg 3 dependency, and reject insecure/misconfigured production values at startup. The API binds to Render's `$PORT`; do not set a fixed public port.
 
 ## Migrating the existing VPS database
 

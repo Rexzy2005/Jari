@@ -49,16 +49,16 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="mb-7">
+      <div className="mb-5">
         <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#547253]">Welcome back</p>
         <h1 className="mt-3 font-serif text-3xl font-medium tracking-[-.03em] text-[#20291f] sm:text-4xl">Sign in to JARI</h1>
         <p className="mt-2 text-sm leading-6 text-[#697268]">Continue with your phone number and password.</p>
       </div>
 
-      <div className="mb-5 rounded-xl bg-[#eef3eb] p-3.5 text-xs leading-5 text-[#456346]">
+      <div className="mb-4 rounded-xl bg-[#eef3eb] p-3 text-xs leading-5 text-[#456346]">
         <p className="font-semibold">Choose a demo workspace</p>
         <p className="mt-1">Pre-filled demo credentials for quick access.</p>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-2.5 grid grid-cols-3 gap-2">
           {demoAccounts.map((account) => (
             <button
               key={account.label}
@@ -67,7 +67,7 @@ export default function LoginPage() {
                 setForm({ phone: account.phone, password: account.password });
                 setError("");
               }}
-              className="min-h-10 rounded-lg bg-white px-2 text-left text-[11px] font-semibold text-[#36523b] transition-colors hover:bg-[#f8faf6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#76916a]"
+              className="min-h-9 rounded-lg bg-white px-2 text-left text-[11px] font-semibold text-[#36523b] transition-colors hover:bg-[#f8faf6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#76916a]"
             >
               {account.label}
             </button>
@@ -75,7 +75,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <form className="space-y-4" onSubmit={onSubmit}>
+      <form className="space-y-3" onSubmit={onSubmit}>
         <div>
           <label htmlFor="phone" className="label-text">Phone number</label>
           <input
@@ -127,7 +127,7 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-[#657064]">New to JARI? <Link href="/register" className="font-semibold text-[#496b50] hover:text-[#244a35]">Create an account</Link></p>
+      <p className="mt-4 text-center text-sm text-[#657064]">New to JARI? <Link href="/register" className="font-semibold text-[#496b50] hover:text-[#244a35]">Create an account</Link></p>
     </>
   );
 }

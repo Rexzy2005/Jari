@@ -1,6 +1,7 @@
-from typing import List, Literal, Union
+import json
+from typing import Annotated, List, Literal, Union
 from pydantic import AnyHttpUrl, SecretStr, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from sqlalchemy.engine import make_url
 
 
@@ -14,16 +15,28 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     ALGORITHM: str = "HS256"
     DATABASE_URL: SecretStr = SecretStr("postgresql+psycopg://jari_user:jari_dev_password@localhost:5432/jari_db")
-    BACKEND_CORS_ORIGINS: List[Union[AnyHttpUrl, str]] = ["http://localhost:3000"]
+    # Render commonly supplies this as a plain URL, while local/example config
+    # may use a JSON list. NoDecode lets our validator accept both forms before
+    # pydantic-settings tries to JSON-decode environment values.
+    BACKEND_CORS_ORIGINS: Annotated[List[Union[AnyHttpUrl, str]], NoDecode] = ["http://localhost:3000"]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
+        if isinstance(v, str):
+            value = v.strip()
+            if not value:
+                return []
+            if value.startswith("["):
+                try:
+                    v = json.loads(value)
+                except json.JSONDecodeError as exc:
+                    raise ValueError("BACKEND_CORS_ORIGINS must be a URL or a JSON array of URLs.") from exc
+            else:
+                v = [origin.strip() for origin in value.split(",") if origin.strip()]
+        if isinstance(v, list):
             return v
-        raise ValueError(v)
+        raise ValueError("BACKEND_CORS_ORIGINS must be a URL or a JSON array of URLs.")
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod

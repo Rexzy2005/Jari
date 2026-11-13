@@ -48,7 +48,7 @@ export default function RegisterPage() {
 
   return (
     <>
-      <div className="mb-6">
+      <div className="mb-4">
         <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#547253]">Get started</p>
         <h1 className="mt-3 font-serif text-3xl font-medium tracking-[-.03em] text-[#20291f] sm:text-4xl">Create your JARI account</h1>
         <p className="mt-2 text-sm leading-6 text-[#697268]">{accountType === "farmer" ? "Start with your details. Add farm information as you go." : "Register your organisation and the services it offers."}</p>

@@ -139,6 +139,39 @@ textarea:focus {
   .pill { @apply inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800; }
 }
 
+.auth-page {
+  height: 100vh;
+  height: 100dvh;
+}
+
+html:has(.auth-page),
+body:has(.auth-page) { overflow: hidden; }
+
+.auth-content {
+  overflow: hidden;
+}
+
+@media (max-height: 820px) {
+  .auth-mobile-visual { display: none; }
+}
+
+@media (max-height: 700px) {
+  .auth-footer { display: none; }
+  .auth-content { justify-content: flex-start; padding-top: .75rem; padding-bottom: .75rem; }
+}
+
+.auth-content .input-shell { min-height: 2.65rem; }
+.auth-content textarea.input-shell { min-height: 3rem; }
+
+@media (max-height: 820px) {
+  .auth-wizard-heading { margin-bottom: .75rem; }
+  .auth-wizard-progress { margin-bottom: .75rem; }
+  .auth-wizard-heading h2 { margin-top: .25rem; font-size: 1.4rem; }
+  .auth-wizard-heading p:last-child { margin-top: .25rem; }
+  .auth-institution-wizard form { margin-top: .75rem; }
+  .auth-content textarea { height: 3rem; resize: none; }
+}
+
 .scroll-reveal {
   transition: opacity 680ms cubic-bezier(.2, .72, .22, 1), transform 680ms cubic-bezier(.2, .72, .22, 1);
   transition-delay: var(--reveal-delay, 0ms);
