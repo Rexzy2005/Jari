@@ -3,25 +3,27 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Building2, Eye, EyeOff, Phone, ShieldCheck, Sprout } from "lucide-react";
 import { loginWithBackend } from "@/lib/auth";
 import { notifyToast } from "@/lib/toast";
 
 const demoAccounts = [
-  { label: "Farmer", phone: "08030000000", password: "password123" },
-  { label: "Admin", phone: "08040000000", password: "admin123" },
-  { label: "Institution", phone: "08060000000", password: "institution123" },
+  { label: "Farmer", icon: Sprout, phone: "08030000000", password: "password123" },
+  { label: "Admin", icon: ShieldCheck, phone: "08040000000", password: "admin123" },
+  { label: "Institution", icon: Building2, phone: "08060000000", password: "institution123" },
 ];
 
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ phone: "", password: "" });
+  const [selectedDemo, setSelectedDemo] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (field: keyof typeof form, value: string) => {
     setForm((previous) => ({ ...previous, [field]: value }));
+    setSelectedDemo("");
     if (error) setError("");
   };
 
@@ -49,44 +51,47 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="mb-5">
-        <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#547253]">Welcome back</p>
-        <h1 className="mt-3 font-serif text-3xl font-medium tracking-[-.03em] text-[#20291f] sm:text-4xl">Sign in to JARI</h1>
-        <p className="mt-2 text-sm leading-6 text-[#697268]">Continue with your phone number and password.</p>
+      <div className="mb-5 sm:mb-6">
+        <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#547253]">Your farm workspace</p>
+        <h1 className="mt-2 font-serif text-3xl font-medium tracking-[-.04em] text-[#20291f] sm:text-[2.15rem]">Welcome back.</h1>
+        <p className="mt-1.5 text-sm leading-5 text-[#697268]">Sign in to pick up where your farm left off.</p>
       </div>
 
-      <div className="mb-4 rounded-xl bg-[#eef3eb] p-3 text-xs leading-5 text-[#456346]">
-        <p className="font-semibold">Choose a demo workspace</p>
-        <p className="mt-1">Pre-filled demo credentials for quick access.</p>
-        <div className="mt-2.5 grid grid-cols-3 gap-2">
-          {demoAccounts.map((account) => (
+      <section aria-label="Demo workspaces" className="auth-demo mb-3 flex flex-col gap-2 rounded-2xl border border-[#e6ebe2] bg-[#f8f9f6] p-2.5 sm:mb-4 sm:flex-row sm:items-center">
+        <div className="flex shrink-0 items-center justify-between gap-2 sm:block sm:w-[8.75rem]">
+          <div>
+            <p className="text-[11px] font-semibold text-[#344536]">Try a demo</p>
+            <p className="mt-0.5 text-[9px] leading-3 text-[#849080]">Prefills sign in</p>
+          </div>
+          <span className="shrink-0 rounded-full bg-[#edf2e8] px-2 py-1 text-[8px] font-bold uppercase tracking-[.12em] text-[#597253] sm:hidden">Demo</span>
+        </div>
+        <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5">
+          {demoAccounts.map(({ icon: Icon, ...account }) => (
             <button
               key={account.label}
               type="button"
               onClick={() => {
                 setForm({ phone: account.phone, password: account.password });
+                setSelectedDemo(account.phone);
                 setError("");
               }}
-              className="min-h-9 rounded-lg bg-white px-2 text-left text-[11px] font-semibold text-[#36523b] transition-colors hover:bg-[#f8faf6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#76916a]"
+              aria-pressed={selectedDemo === account.phone}
+              className={`flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2 text-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#76916a] sm:justify-start sm:px-2 ${selectedDemo === account.phone ? "border-[#78916e] bg-[#edf3e9]" : "border-white bg-white hover:border-[#dce5d7] hover:bg-[#fbfcfa]"}`}
             >
-              {account.label}
+              <Icon size={13} className="shrink-0 text-[#547253]" />
+              <span className="truncate text-[9px] font-bold text-[#36523b] sm:text-[10px]">{account.label}</span>
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
       <form className="space-y-3" onSubmit={onSubmit}>
         <div>
           <label htmlFor="phone" className="label-text">Phone number</label>
-          <input
-            id="phone"
-            type="tel"
-            autoComplete="tel"
-            className="input-shell"
-            placeholder="0803 000 0000"
-            value={form.phone}
-            onChange={(event) => handleChange("phone", event.target.value)}
-          />
+          <div className="relative">
+            <Phone aria-hidden="true" size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#879381]" />
+            <input id="phone" type="tel" autoComplete="tel" className="input-shell pl-10" placeholder="0803 000 0000" value={form.phone} onChange={(event) => handleChange("phone", event.target.value)} />
+          </div>
         </div>
 
         <div>
@@ -121,13 +126,13 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-2 min-h-12 w-full rounded-xl bg-[#244b35] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#193d2b] disabled:cursor-not-allowed disabled:bg-[#81947f]"
+          className="mt-1 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#244b35] px-4 py-3 text-sm font-semibold text-white shadow-[0_8px_18px_-12px_rgba(36,75,53,.8)] transition-all hover:-translate-y-0.5 hover:bg-[#193d2b] disabled:cursor-not-allowed disabled:bg-[#81947f] disabled:hover:translate-y-0"
         >
-          {isSubmitting ? "Signing in..." : "Sign in"}
+          {isSubmitting ? "Signing in..." : "Sign in to JARI"}
+          {!isSubmitting && <ArrowRight size={16} />}
         </button>
       </form>
 
-      <p className="mt-4 text-center text-sm text-[#657064]">New to JARI? <Link href="/register" className="font-semibold text-[#496b50] hover:text-[#244a35]">Create an account</Link></p>
     </>
   );
 }

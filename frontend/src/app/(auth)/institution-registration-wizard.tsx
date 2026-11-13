@@ -53,7 +53,7 @@ const serviceSteps: ServiceStep[] = [
   ] },
 ];
 
-type WizardStep = { id: string; title: string; eyebrow: string; kind: "organisation" | "location" | "services" | "service" | "representative" | "documents" | "review"; service?: ServiceStep };
+type WizardStep = { id: string; title: string; eyebrow: string; kind: "organisation" | "contact" | "location" | "services" | "service" | "representative" | "credentials" | "document" | "review"; service?: ServiceStep; documentCategory?: string; documentDescription?: string; documentRequired?: boolean };
 
 export function InstitutionRegistrationWizard() {
   const router = useRouter();
@@ -77,13 +77,22 @@ export function InstitutionRegistrationWizard() {
         fields: service.fields.slice(index * 3, (index + 1) * 3),
       }));
     });
+    const requiredDocuments = requiredDocumentCategories(data.categories);
+    const documentSpecs = [
+      { category: "registration evidence", title: "Organisation registration evidence", description: "CAC certificate or applicable registration evidence", required: true },
+      { category: "operating licence", title: "Operating licence or regulatory authorisation", description: "Required for lending and/or insurance services", required: true },
+      { category: "grant authority", title: "Grant administration evidence", description: "Evidence of authority to administer grant programmes", required: true },
+      { category: "representative authority", title: "Representative authority evidence", description: "Add this if your organisation requires proof of authority", required: false },
+    ].filter((document) => document.required ? requiredDocuments.includes(document.category) : true);
     return [
       { id: "organisation", title: "Organisation information", eyebrow: "About your organisation", kind: "organisation" },
-      { id: "location", title: "Official contact and location", eyebrow: "Where we can reach you", kind: "location" },
+      { id: "contact", title: "Official contact", eyebrow: "How we can reach your organisation", kind: "contact" },
+      { id: "location", title: "Office location", eyebrow: "Where your organisation is based", kind: "location" },
       { id: "services", title: "Institution category and services", eyebrow: "Choose every service you offer", kind: "services" },
       ...servicePages.map((service) => ({ id: service.id, title: service.title, eyebrow: service.category, kind: "service" as const, service })),
       { id: "representative", title: "Authorised representative", eyebrow: "Who is submitting this profile", kind: "representative" },
-      { id: "documents", title: "Verification documents", eyebrow: "Evidence for the services selected", kind: "documents" },
+      { id: "credentials", title: "Create sign-in details", eyebrow: "Secure this organisation account", kind: "credentials" },
+      ...documentSpecs.map((document) => ({ id: `document-${document.category}`, title: document.title, eyebrow: "Verification documents", kind: "document" as const, documentCategory: document.category, documentDescription: document.description, documentRequired: document.required })),
       { id: "review", title: "Review and submit", eyebrow: "Check your information", kind: "review" },
     ];
   }, [data.categories]);
@@ -118,15 +127,14 @@ export function InstitutionRegistrationWizard() {
       setError("Choose at least one service category to continue.");
       return false;
     }
-    if (activeStep.kind === "representative" && data.password !== data.confirmPassword) {
+    if (activeStep.kind === "credentials" && data.password !== data.confirmPassword) {
       setError("The passwords do not match.");
       return false;
     }
-    if (activeStep.kind === "documents") {
-      const needed = requiredDocumentCategories(data.categories);
-      const missing = needed.filter((category) => !documents.some((document) => document.category === category));
-      if (missing.length) {
-        setError(`Please add: ${missing.join(", ")}.`);
+    if (activeStep.kind === "document" && activeStep.documentRequired) {
+      const hasDocument = documents.some((document) => document.category === activeStep.documentCategory);
+      if (!hasDocument) {
+        setError("Please add the requested document to continue.");
         return false;
       }
     }
@@ -160,51 +168,54 @@ export function InstitutionRegistrationWizard() {
   };
 
   return <div className="auth-institution-wizard">
-    <div className="auth-wizard-heading mb-4">
-      <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#547253]">Institution registration · Step {stepIndex + 1} of {steps.length}</p>
-      <h2 className="mt-2 font-serif text-2xl font-medium tracking-[-.03em] text-[#20291f] sm:text-3xl">{activeStep.title}</h2>
-      <p className="mt-1.5 text-sm leading-5 text-[#697268]">{activeStep.eyebrow}</p>
+    <div className="auth-wizard-heading mb-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[9px] font-bold uppercase tracking-[.15em] text-[#547253]">Step {stepIndex + 1} of {steps.length}</p>
+        <p className="truncate text-[10px] text-[#7b8478]">{activeStep.eyebrow}</p>
+      </div>
+      <h2 className="mt-1.5 font-serif text-xl font-medium tracking-[-.03em] text-[#20291f] sm:text-2xl">{activeStep.title}</h2>
     </div>
-    <div aria-label={`Step ${stepIndex + 1} of ${steps.length}`} className="auth-wizard-progress mb-4 flex gap-1.5" role="progressbar" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={stepIndex + 1}>
+    <div aria-label={`Step ${stepIndex + 1} of ${steps.length}`} className="auth-wizard-progress mb-3 flex gap-1" role="progressbar" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={stepIndex + 1}>
       {steps.map((step, index) => <span key={step.id} title={step.title} className={`h-1.5 flex-1 rounded-full transition-colors ${index <= stepIndex ? "bg-[#547253]" : "bg-[#e7ebe3]"}`} />)}
     </div>
 
-    <form ref={formRef} onSubmit={activeStep.kind === "review" ? submit : next} className="space-y-3" noValidate={false}>
-      <div className="min-h-0 space-y-3">
+    <form ref={formRef} onSubmit={activeStep.kind === "review" ? submit : next} className="auth-wizard-form space-y-2.5" noValidate={false}>
+      <div className={`auth-wizard-fields min-h-0 grid grid-cols-1 gap-x-3 gap-y-2.5 sm:grid-cols-2 ${activeStep.kind === "organisation" ? "auth-wizard-fields-organisation" : ""}`}>
         {activeStep.kind === "organisation" && <>
-          <Field label="Organisation name"><input required autoComplete="organization" className="input-shell" value={data.organisationName} onChange={(event) => update({ organisationName: event.target.value })} placeholder="Registered organisation name" /></Field>
-          <Field label="Organisation type"><select required className="input-shell" value={data.organisationType} onChange={(event) => update({ organisationType: event.target.value })}><option value="">Choose organisation type</option>{organisationTypes.map((type) => <option key={type}>{type}</option>)}</select></Field>
-          <Field label="CAC registration number" hint="Enter it if your organisation has one; applicable registration evidence is requested later."><input className="input-shell" value={data.cacRegistrationNumber} onChange={(event) => update({ cacRegistrationNumber: event.target.value })} placeholder="Registration number, if applicable" /></Field>
+          <Field label="Organisation name"><input required autoComplete="organization" className="input-shell" value={data.organisationName} onChange={(event) => update({ organisationName: event.target.value })} placeholder="Registered name" /></Field>
+          <Field label="Organisation type"><select required className="input-shell" value={data.organisationType} onChange={(event) => update({ organisationType: event.target.value })}><option value="">Select type</option>{organisationTypes.map((type) => <option key={type}>{type}</option>)}</select></Field>
+          <Field label="CAC registration no. (optional)"><input className="input-shell" value={data.cacRegistrationNumber} onChange={(event) => update({ cacRegistrationNumber: event.target.value })} placeholder="Registration number" /></Field>
           <Field label="Year established"><input required type="number" inputMode="numeric" min="1800" max={new Date().getFullYear()} className="input-shell" value={data.yearEstablished} onChange={(event) => update({ yearEstablished: event.target.value })} placeholder="e.g. 2015" /></Field>
         </>}
-        {activeStep.kind === "location" && <>
+        {activeStep.kind === "contact" && <>
           <Field label="Official email"><input required type="email" autoComplete="email" className="input-shell" value={data.officialEmail} onChange={(event) => update({ officialEmail: event.target.value })} placeholder="name@organisation.ng" /></Field>
           <Field label="Official phone number"><input required type="tel" autoComplete="tel" className="input-shell" value={data.officialPhone} onChange={(event) => update({ officialPhone: event.target.value })} placeholder="Office phone number" /></Field>
           <Field label="Website" hint="Optional"><input type="url" autoComplete="url" className="input-shell" value={data.website} onChange={(event) => update({ website: event.target.value })} placeholder="https://" /></Field>
+        </>}
+        {activeStep.kind === "location" && <>
           <Field label="Office address"><textarea required autoComplete="street-address" className="input-shell min-h-20 resize-y" value={data.officeAddress} onChange={(event) => update({ officeAddress: event.target.value })} placeholder="Street address" /></Field>
-          <div className="grid gap-3 sm:grid-cols-2"><Field label="State"><input required autoComplete="address-level1" className="input-shell" value={data.state} onChange={(event) => update({ state: event.target.value })} placeholder="State" /></Field><Field label="LGA"><input required autoComplete="address-level2" className="input-shell" value={data.lga} onChange={(event) => update({ lga: event.target.value })} placeholder="Local Government Area" /></Field></div>
+          <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2"><Field label="State"><input required autoComplete="address-level1" className="input-shell" value={data.state} onChange={(event) => update({ state: event.target.value })} placeholder="State" /></Field><Field label="LGA"><input required autoComplete="address-level2" className="input-shell" value={data.lga} onChange={(event) => update({ lga: event.target.value })} placeholder="Local Government Area" /></Field></div>
           <Field label="Organisation logo" hint="Optional"><input type="file" accept="image/*" className="input-shell file:mr-3 file:rounded-full file:border-0 file:bg-[#edf1e9] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-[#35543a]" onChange={async (event) => { const file = event.target.files?.[0]; if (file) { try { setLogo(await readAsDataUrl(file)); } catch { setError("We could not read the logo file."); } } }} /></Field>
           {logo && <div className="flex items-center gap-2 text-xs text-[#547253]"><Check size={14} /> Logo selected</div>}
         </>}
-        {activeStep.kind === "services" && <fieldset className="space-y-2.5"><legend className="mb-2 text-xs font-semibold text-[#465244]">Select all that apply</legend>{categories.map((category) => <label key={category} className={`flex cursor-pointer items-start gap-3 rounded-2xl p-4 transition-colors ${data.categories.includes(category) ? "bg-[#edf2e9]" : "bg-[#f7f8f5] hover:bg-[#f0f2ec]"}`}><input type="checkbox" checked={data.categories.includes(category)} onChange={() => toggleCategory(category)} className="mt-0.5 h-4 w-4 accent-[#416244]" /><span><span className="block text-sm font-semibold text-[#304032]">{category}</span><span className="mt-0.5 block text-xs leading-5 text-[#727b70]">{categorySummary(category)}</span></span></label>)}</fieldset>}
-        {activeStep.kind === "service" && activeStep.service && <div className="space-y-3">{activeStep.service.fields.map((field) => <Field key={field.key} label={field.label} hint={field.optional ? "Optional" : undefined}><ServiceInput field={field} value={data.services[activeStep.service!.category]?.[field.key] || ""} onChange={(value) => updateService(activeStep.service!.category, field.key, value)} /></Field>)}<p className="text-[11px] leading-5 text-[#7b8478]">Enter the information that describes your organisation’s current service offer.</p></div>}
+        {activeStep.kind === "services" && <fieldset className="space-y-2 sm:col-span-2"><legend className="mb-2 text-xs font-semibold text-[#465244]">Select all that apply</legend>{categories.map((category) => <label key={category} className={`flex cursor-pointer items-start gap-3 rounded-2xl p-3 transition-colors ${data.categories.includes(category) ? "bg-[#edf2e9]" : "bg-[#f7f8f5] hover:bg-[#f0f2ec]"}`}><input type="checkbox" checked={data.categories.includes(category)} onChange={() => toggleCategory(category)} className="mt-0.5 h-4 w-4 accent-[#416244]" /><span><span className="block text-sm font-semibold text-[#304032]">{category}</span><span className="mt-0.5 block text-xs leading-5 text-[#727b70]">{categorySummary(category)}</span></span></label>)}</fieldset>}
+        {activeStep.kind === "service" && activeStep.service && <div className="auth-wizard-service-fields grid gap-x-3 gap-y-2.5 sm:col-span-2 sm:grid-cols-2">{activeStep.service.fields.map((field) => <Field key={field.key} label={field.label} hint={field.optional ? "Optional" : undefined}><ServiceInput field={field} value={data.services[activeStep.service!.category]?.[field.key] || ""} onChange={(value) => updateService(activeStep.service!.category, field.key, value)} /></Field>)}<p className="text-[10px] leading-4 text-[#7b8478] sm:col-span-2">Enter the information that describes your organisation’s current service offer.</p></div>}
         {activeStep.kind === "representative" && <>
           <Field label="Representative’s full name"><input required autoComplete="name" className="input-shell" value={data.representative.fullName} onChange={(event) => updateRepresentative("fullName", event.target.value)} placeholder="Full name" /></Field>
           <Field label="Job title"><input required autoComplete="organization-title" className="input-shell" value={data.representative.jobTitle} onChange={(event) => updateRepresentative("jobTitle", event.target.value)} placeholder="Role in the organisation" /></Field>
           <Field label="Official email"><input required type="email" autoComplete="email" className="input-shell" value={data.representative.email} onChange={(event) => updateRepresentative("email", event.target.value)} placeholder="Representative’s work email" /></Field>
           <Field label="Phone number"><input required type="tel" autoComplete="tel" className="input-shell" value={data.representative.phone} onChange={(event) => updateRepresentative("phone", event.target.value)} placeholder="Used to sign in to this demo" /></Field>
+        </>}
+        {activeStep.kind === "credentials" && <>
           <Field label="Create password"><input required type={passwordVisible ? "text" : "password"} autoComplete="new-password" minLength={6} className="input-shell" value={data.password} onChange={(event) => update({ password: event.target.value })} placeholder="At least 6 characters" /></Field>
           <Field label="Confirm password"><input required type={passwordVisible ? "text" : "password"} autoComplete="new-password" minLength={6} className="input-shell" value={data.confirmPassword} onChange={(event) => update({ confirmPassword: event.target.value })} placeholder="Enter password again" /></Field>
-          <label className="flex items-center gap-2 text-xs text-[#657064]"><input type="checkbox" checked={passwordVisible} onChange={(event) => setPasswordVisible(event.target.checked)} className="h-4 w-4 accent-[#416244]" />Show passwords</label>
+          <label className="flex items-center gap-2 text-xs text-[#657064] sm:col-span-2"><input type="checkbox" checked={passwordVisible} onChange={(event) => setPasswordVisible(event.target.checked)} className="h-4 w-4 accent-[#416244]" />Show passwords</label>
         </>}
-        {activeStep.kind === "documents" && <div className="space-y-3">
-          <p className="text-xs leading-5 text-[#697268]">Choose evidence relevant to your organisation. Files are stored in this browser demo; large files can exceed browser storage.</p>
-          <UploadSlot title="Organisation registration evidence" description="CAC certificate or applicable registration evidence" required files={documents.filter((item) => item.category === "registration evidence")} onChange={(files) => addFiles(files, "registration evidence")} onRemove={removeFile} />
-          {data.categories.some((category) => category === "Lending Institution" || category === "Insurance Provider") && <UploadSlot title="Operating licence or regulatory authorisation" description="Required for selected lending and/or insurance services" required files={documents.filter((item) => item.category === "operating licence")} onChange={(files) => addFiles(files, "operating licence")} onRemove={removeFile} />}
-          {data.categories.includes("Grant Provider") && <UploadSlot title="Grant administration evidence" description="Evidence of authority to administer grants" required files={documents.filter((item) => item.category === "grant authority")} onChange={(files) => addFiles(files, "grant authority")} onRemove={removeFile} />}
-          <UploadSlot title="Representative authority evidence" description="Add this where your organisation requires proof of authority" files={documents.filter((item) => item.category === "representative authority")} onChange={(files) => addFiles(files, "representative authority")} onRemove={removeFile} />
+        {activeStep.kind === "document" && activeStep.documentCategory && <div className="space-y-3 sm:col-span-2">
+          <p className="text-xs leading-5 text-[#697268]">Add the requested file. Uploaded evidence stays in this browser demo and is included with your submission.</p>
+          <UploadSlot title={activeStep.title} description={activeStep.documentDescription || "Choose an applicable document"} required={activeStep.documentRequired} files={documents.filter((item) => item.category === activeStep.documentCategory)} onChange={(files) => addFiles(files, activeStep.documentCategory!)} onRemove={removeFile} />
         </div>}
-        {activeStep.kind === "review" && <Review data={data} documents={documents} logo={Boolean(logo)} agreed={data.agreed} onAgree={(agreed) => update({ agreed })} />}
+        {activeStep.kind === "review" && <div className="sm:col-span-2"><Review data={data} documents={documents} logo={Boolean(logo)} agreed={data.agreed} onAgree={(agreed) => update({ agreed })} /></div>}
       </div>
 
       {error && <div role="alert" className="rounded-xl bg-[#fbefeb] px-3.5 py-3 text-sm leading-5 text-[#9a493c]">{error}</div>}

@@ -151,25 +151,57 @@ body:has(.auth-page) { overflow: hidden; }
   overflow: hidden;
 }
 
-@media (max-height: 820px) {
-  .auth-mobile-visual { display: none; }
+.auth-content-main { min-width: 0; }
+.auth-visual { isolation: isolate; }
+.auth-content .input-shell {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 2.8rem;
+  border: 1px solid #e6ebe2;
+  border-radius: .9rem;
+  padding: .68rem .9rem;
+  background: #f6f7f3;
+  color: #263329;
 }
+.auth-content .input-shell:focus { border-color: #a8b99e; background: #fff; box-shadow: 0 0 0 3px rgba(84, 114, 83, .12); }
+.auth-content .input-shell.pl-10 { padding-left: 2.5rem; }
+.auth-content .input-shell.pr-11 { padding-right: 2.75rem; }
+.auth-content textarea.input-shell { min-height: 3rem; }
+.auth-register-type-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+.auth-register-type-compact .label-text { margin: 0; }
+.auth-register-type-compact .input-shell { width: min(58%, 13rem); min-height: 2.5rem; padding-top: .5rem; padding-bottom: .5rem; }
+.auth-institution-wizard { min-width: 0; width: 100%; }
+.auth-wizard-fields > * { min-width: 0; }
+.auth-wizard-fields .label-text { margin-bottom: .3rem; font-size: .72rem; }
+.auth-wizard-fields .input-shell { min-height: 2.6rem; padding-top: .55rem; padding-bottom: .55rem; font-size: .76rem; }
+.auth-wizard-fields textarea.input-shell { min-height: 3rem; }
 
 @media (max-height: 700px) {
   .auth-footer { display: none; }
-  .auth-content { justify-content: flex-start; padding-top: .75rem; padding-bottom: .75rem; }
+  .auth-content { padding-top: .75rem; padding-bottom: .75rem; }
+  .auth-content > header { margin-bottom: .75rem; }
+  .auth-content-main { justify-content: flex-start; }
+  .auth-content-main > nav { margin-bottom: .75rem; }
+  .auth-content .label-text { margin-bottom: .25rem; font-size: .7rem; }
+  .auth-content .input-shell { min-height: 2.55rem; padding-top: .5rem; padding-bottom: .5rem; }
 }
-
-.auth-content .input-shell { min-height: 2.65rem; }
-.auth-content textarea.input-shell { min-height: 3rem; }
 
 @media (max-height: 820px) {
   .auth-wizard-heading { margin-bottom: .75rem; }
   .auth-wizard-progress { margin-bottom: .75rem; }
-  .auth-wizard-heading h2 { margin-top: .25rem; font-size: 1.4rem; }
-  .auth-wizard-heading p:last-child { margin-top: .25rem; }
+  .auth-wizard-heading h2 { margin-top: .25rem; font-size: 1.3rem; }
   .auth-institution-wizard form { margin-top: .75rem; }
   .auth-content textarea { height: 3rem; resize: none; }
+}
+
+@media (max-height: 600px) and (min-width: 360px) {
+  .auth-wizard-fields-organisation { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .scroll-reveal {
