@@ -59,6 +59,8 @@ The repository currently has no ESLint configuration, so the lint command may op
 
 ## Backend setup
 
+For the Windows Git Bash commands and Module 2 local testing checklist, use the [backend Git Bash runbook](docs/backend-gitbash-runbook.md).
+
 ### 1. Start PostgreSQL
 
 If PostgreSQL 16 is already available locally, create a database and user matching your `DATABASE_URL`. Otherwise, from any terminal with Docker installed, start a local development database:
