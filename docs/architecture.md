@@ -35,13 +35,13 @@ House capacity, infrastructure and house-level biosecurity belong to a house. Ba
 
 **Module 1 — farmer onboarding and primary farm registration:** account, contact-verification demo where no provider exists, farmer profile, primary farm, review, resumable onboarding, honest incomplete/active dashboard. Simulated frontend persistence only. It may collect an optional house count as descriptive farm information but must not create house or batch records.
 
-**Module 2 — flock and inventory management:** house management is the operational foundation; flock and inventory are independent submodules that can be connected through shared farm/house/batch references. Its plan currently explicitly defers some house-management work pending separate authorization; respect that restriction and resolve that sequencing only when Module 2 begins. Module 1 does not absorb these operational workflows.
+**Module 2 — flock and inventory management:** house management is the operational foundation for flock batches. House, flock and inventory operations use the shared farm/house/batch references; flock and inventory remain independently usable. The current Module 2 plan authorizes house and flock work in Phase 2, inventory in Phase 3, integration and record freshness in Phase 4, and validation/documentation in Phase 5. Module 1 does not absorb these operational workflows. Intelligent record capture remains excluded until separately authorized.
 
 Later capabilities must reuse the shared identities and relationships above. Module plans define implementation scope; this document defines the shared product architecture and does not authorize backend or later-module work.
 
 ## Existing implementation versus target
 
-The frontend already has a simulated service facade, versioned local storage, and legacy records for a single farm profile, poultry houses, flocks/movements, feed, production, health and financial activity. Several workflows and tests are implemented; see `docs/active.md` and `docs/progress.md` for verified status. This is not yet the target normalized model: the existing farm profile is a single shared record, and several operational records use optional house IDs or display names rather than complete account/farm ownership references. Existing demo data must be migrated or isolated deliberately when onboarding introduces account-scoped records. Do not claim existing screens or workflows imply production API integration.
+The frontend uses a simulated service facade and browser-local storage. Module 2 work is adding account-scoped farm, house, batch, movement, activity, milestone and inventory-ledger relationships while preserving compatibility with existing demo records. Some legacy production, finance and health records still use display names or shared storage and are not yet fully aligned with the target normalized model. See `docs/progress.md` for the current implementation boundary and remaining work. Do not claim existing screens or workflows imply production API integration.
 
 ## Module 1 logical records
 

@@ -6,7 +6,19 @@ import {
     addFeedUse as simAddFeedUse,
     addFlockMovement as simAddFlockMovement,
     addFlockTransfer as simAddFlockTransfer,
+    transferFlockBetweenFarms as simTransferFlockBetweenFarms,
     addHealthIncident as simAddHealthIncident,
+    createFlockActivity as simCreateFlockActivity,
+    updateFlockActivity as simUpdateFlockActivity,
+    updateFlockActivityStatus as simUpdateFlockActivityStatus,
+    addFlockMilestone as simAddFlockMilestone,
+    closeFlockBatch as simCloseFlockBatch,
+    archiveFlockBatch as simArchiveFlockBatch,
+    updateFlockRecord as simUpdateFlockRecord,
+    createInventorySupplier as simCreateInventorySupplier,
+    updateInventorySupplier as simUpdateInventorySupplier,
+    addInventoryPurchase as simAddInventoryPurchase,
+    updateInventoryItem as simUpdateInventoryItem,
     addTreatmentRecord as simAddTreatmentRecord,
     addProductionRecord as simAddProductionRecord,
     addSaleRecord as simAddSaleRecord,
@@ -16,6 +28,7 @@ import {
     applyToOpportunity,
     addFarmDocument as simAddFarmDocument,
     archivePoultryHouse as simArchivePoultryHouse,
+    createFarmerFarm as simCreateFarmerFarm,
     createPoultryHouse as simCreatePoultryHouse,
     defaultFarmProfile,
     createFlockRecord as simCreateFlockRecord,
@@ -27,7 +40,32 @@ import {
     getFeedInventory,
     getFeedUseRecords,
     getFlockRecords,
+    getFlockActivities,
+    getFlockMilestones,
+    getFlockClosures,
+    getFlockTimeline,
+    getFlockPopulationStats,
+    getFlockLifecycleEvents,
     getFlockMovements,
+    getFlockAssignmentHistory,
+    getFlockHouseAssignments,
+    getFarmerFarms,
+    getInventoryItems,
+    getInventoryTransactions,
+    getInventorySuppliers,
+    getInventoryPurchases,
+    getInventoryDashboardSummary,
+    getInventoryForecast,
+    getFarmReportingPreferences,
+    saveFarmReportingPreference,
+    getFarmUpdateReminders,
+    getFarmRecordFreshness,
+    respondToFarmUpdateReminder,
+    createInventoryItem as simCreateInventoryItem,
+    recordInventoryTransaction as simRecordInventoryTransaction,
+    transferInventoryBetweenFarms as simTransferInventoryBetweenFarms,
+    transferInventoryBetweenLocations as simTransferInventoryBetweenLocations,
+    getHousePopulation,
     getProductionRecords,
     getOpportunityApplications,
     getInstitutionRequests,
@@ -49,6 +87,8 @@ import {
     savePoultryHouses,
     saveSalesRecords,
     updatePoultryHouse as simUpdatePoultryHouse,
+    updatePoultryHouseStatus as simUpdatePoultryHouseStatus,
+    moveFlockToHouse as simMoveFlockToHouse,
     updateOpportunityApplication,
     addInstitutionRequest,
     updateInstitutionRequest,
@@ -98,18 +138,6 @@ import type {
 import {
     syncAllFromBackend,
     backendSaveFarmProfile,
-    backendCreatePoultryHouse,
-    backendArchivePoultryHouse,
-    backendCreateFlock,
-    backendRecordFlockMovement,
-    backendTransferFlock,
-    backendAddFeedPurchase,
-    backendAddFeedUse,
-    backendAddProduction,
-    backendAddHealthIncident,
-    backendAddVaccination,
-    backendAddTreatment,
-    backendAddSale,
     backendRecordSalePayment,
     backendAddExpense,
     backendRecordExpensePayment,
@@ -397,265 +425,63 @@ export async function saveFarmProfile(profile: SavedFarmProfile): Promise<SavedF
 }
 
 export async function createPoultryHouse(house: Parameters<typeof simCreatePoultryHouse>[0]) {
-    const created = simCreatePoultryHouse(house);
-    if (getStoredToken()) {
-        try {
-            await backendCreatePoultryHouse(house);
-        } catch (e: any) {
-            console.error("Backend house creation failed:", e.message);
-            throw e;
-        }
-    }
-    return created;
+    return simCreatePoultryHouse(house);
 }
 
 export async function archivePoultryHouse(name: string) {
-    simArchivePoultryHouse(name);
-    if (getStoredToken()) {
-        try {
-            await backendArchivePoultryHouse(name, getPoultryHouses());
-        } catch (e: any) {
-            console.error("Backend house archive failed:", e.message);
-            throw e;
-        }
-    }
+    return simArchivePoultryHouse(name);
 }
 
 export async function updatePoultryHouse(name: string, draft: Parameters<typeof simUpdatePoultryHouse>[1]) {
-    simUpdatePoultryHouse(name, draft);
-    if (getStoredToken()) {
-        await syncAllFromBackend().catch(() => { });
-    }
+    return simUpdatePoultryHouse(name, draft);
 }
 
 export async function createFlockRecord(flock: Parameters<typeof simCreateFlockRecord>[0]) {
-    const created = simCreateFlockRecord(flock);
-    if (getStoredToken()) {
-        try {
-            await backendCreateFlock(flock, getPoultryHouses());
-        } catch (e: any) {
-            console.error("Backend flock creation failed:", e.message);
-            throw e;
-        }
-    }
-    return created;
+    return simCreateFlockRecord(flock);
 }
 
 export async function addFlockMovement(movement: Parameters<typeof simAddFlockMovement>[0]) {
-    simAddFlockMovement(movement);
-    if (getStoredToken()) {
-        const flocks = getFlockRecords();
-        const matched = flocks.find((f) => f.name === movement.flock || f.id === movement.flock);
-        if (matched?.id) {
-            try {
-                await backendRecordFlockMovement({
-                    flockId: matched.id,
-                    movementType: movement.type,
-                    quantity: movement.quantity,
-                    date: movement.date,
-                    reason: movement.reason,
-                    notes: movement.notes,
-                });
-            } catch (e: any) {
-                console.error("Backend flock movement failed:", e.message);
-                throw e;
-            }
-        }
-    }
+    return simAddFlockMovement(movement);
 }
 
 export async function addFlockTransfer(transfer: Parameters<typeof simAddFlockTransfer>[0]) {
-    simAddFlockTransfer(transfer);
-    if (getStoredToken()) {
-        const flocks = getFlockRecords();
-        const sourceFlock = flocks.find((f) => f.name === transfer.source || f.id === transfer.source);
-        const destFlock = flocks.find((f) => f.name === transfer.destination || f.id === transfer.destination);
-        if (sourceFlock?.id && destFlock?.id) {
-            try {
-                await backendTransferFlock({
-                    sourceFlockId: sourceFlock.id,
-                    destinationFlockId: destFlock.id,
-                    quantity: transfer.quantity,
-                    date: transfer.date,
-                    reason: transfer.reason,
-                    notes: transfer.notes,
-                });
-            } catch (e: any) {
-                console.error("Backend flock transfer failed:", e.message);
-                throw e;
-            }
-        }
-    }
+    return simAddFlockTransfer(transfer);
+}
+
+export async function transferFlockBetweenFarms(transfer: Parameters<typeof simTransferFlockBetweenFarms>[0]) {
+    return simTransferFlockBetweenFarms(transfer);
+}
+
+export async function transferInventoryBetweenFarms(transfer: Parameters<typeof simTransferInventoryBetweenFarms>[0]) {
+    return simTransferInventoryBetweenFarms(transfer);
 }
 
 export async function addFeedPurchase(purchase: Parameters<typeof simAddFeedPurchase>[0]) {
-    const created = simAddFeedPurchase(purchase);
-    if (getStoredToken()) {
-        try {
-            const flocks = getFlockRecords();
-            const matchedFlock = purchase.flock ? flocks.find((f) => f.name === purchase.flock || f.id === purchase.flock) : undefined;
-            await backendAddFeedPurchase({
-                date: purchase.date,
-                feedType: purchase.feedType,
-                brand: purchase.brand,
-                supplier: purchase.supplier,
-                quantity: purchase.quantity,
-                unit: purchase.unit,
-                bagWeightKg: purchase.bagWeightKg,
-                amount: purchase.amount,
-                amountPaid: purchase.amountPaid,
-                flockId: matchedFlock?.id,
-            });
-        } catch (e: any) {
-            console.error("Backend feed purchase failed:", e.message);
-            throw e;
-        }
-    }
-    return created;
+    return simAddFeedPurchase(purchase);
 }
 
 export async function addFeedUse(use: Parameters<typeof simAddFeedUse>[0]) {
-    const created = simAddFeedUse(use);
-    if (getStoredToken()) {
-        const flocks = getFlockRecords();
-        const matched = flocks.find((f) => f.name === use.flock || f.id === use.flock);
-        try {
-            await backendAddFeedUse({
-                date: use.date,
-                feedType: use.feedType,
-                quantityKg: use.quantityKg,
-                flockId: matched?.id,
-                notes: use.notes,
-            });
-        } catch (e: any) {
-            console.error("Backend feed consumption failed:", e.message);
-            throw e;
-        }
-    }
-    return created;
+    return simAddFeedUse(use);
 }
 
 export async function addProductionRecord(record: Parameters<typeof simAddProductionRecord>[0]) {
-    const created = simAddProductionRecord(record);
-    if (getStoredToken()) {
-        const flocks = getFlockRecords();
-        const matched = flocks.find((f) => f.name === record.flock || f.id === record.flock);
-        try {
-            await backendAddProduction({
-                date: record.date,
-                flockId: matched?.id,
-                type: record.type,
-                liveBirds: record.liveBirds,
-                eggsCollected: record.eggsCollected,
-                goodEggs: record.goodEggs,
-                damagedEggs: record.damagedEggs,
-                birdsWeighed: record.birdsWeighed,
-                averageWeight: record.averageWeight,
-                birdsReady: record.birdsReady,
-                notes: record.notes,
-            });
-        } catch (e: any) {
-            console.error("Backend production record failed:", e.message);
-            throw e;
-        }
-    }
-    return created;
+    return simAddProductionRecord(record);
 }
 
 export async function addHealthIncident(incident: Parameters<typeof simAddHealthIncident>[0]) {
-    const created = simAddHealthIncident(incident);
-    if (getStoredToken()) {
-        const flocks = getFlockRecords();
-        const matched = flocks.find((f) => f.name === incident.flock || f.id === incident.flock);
-        try {
-            await backendAddHealthIncident({
-                date: incident.date,
-                flockId: matched?.id,
-                symptoms: incident.symptoms || incident.confirmedDiagnosis || "Observed symptoms",
-                affectedBirds: incident.affectedBirds,
-                birdsLost: incident.birdsLost,
-                action: incident.action,
-                outcome: incident.outcome,
-                notes: incident.notes,
-            });
-        } catch (e: any) {
-            console.error("Backend health incident failed:", e.message);
-            throw e;
-        }
-    }
-    return created;
+    return simAddHealthIncident(incident);
 }
 
 export async function addVaccinationRecord(vacc: Parameters<typeof simAddVaccinationRecord>[0]) {
-    const created = simAddVaccinationRecord(vacc);
-    if (getStoredToken()) {
-        const flocks = getFlockRecords();
-        const matched = flocks.find((f) => f.name === vacc.flock || f.id === vacc.flock);
-        try {
-            await backendAddVaccination({
-                flockId: matched?.id,
-                vaccine: vacc.vaccine,
-                date: vacc.date,
-                birds: vacc.birds,
-                givenBy: vacc.givenBy,
-                notes: vacc.notes,
-            });
-        } catch (e: any) {
-            console.error("Backend vaccination failed:", e.message);
-            throw e;
-        }
-    }
-    return created;
+    return simAddVaccinationRecord(vacc);
 }
 
 export async function addTreatmentRecord(treat: Parameters<typeof simAddTreatmentRecord>[0]) {
-    const created = simAddTreatmentRecord(treat);
-    if (getStoredToken()) {
-        const flocks = getFlockRecords();
-        const matched = flocks.find((f) => f.name === treat.flock || f.id === treat.flock);
-        try {
-            await backendAddTreatment({
-                flockId: matched?.id,
-                treatment: treat.treatment,
-                medicine: treat.medicine,
-                date: treat.date,
-                birdsTreated: treat.birdsTreated,
-                givenBy: treat.givenBy,
-                notes: treat.notes,
-            });
-        } catch (e: any) {
-            console.error("Backend treatment failed:", e.message);
-            throw e;
-        }
-    }
-    return created;
+    return simAddTreatmentRecord(treat);
 }
 
 export async function addSaleRecord(sale: Parameters<typeof simAddSaleRecord>[0]) {
-    const created = simAddSaleRecord(sale);
-    if (getStoredToken()) {
-        const numAmount = typeof sale.amount === "number" ? sale.amount : parseFloat(String(sale.amount).replace(/[^\d.-]/g, "")) || 0;
-        const numReceived = typeof sale.amountReceived === "number" ? sale.amountReceived : numAmount;
-        const flocks = getFlockRecords();
-        const matchedFlock = sale.flock ? flocks.find((f) => f.name === sale.flock || f.id === sale.flock) : undefined;
-        try {
-            await backendAddSale({
-                date: sale.date,
-                product: sale.product || sale.item || "Other poultry products",
-                quantity: sale.quantity || 1,
-                unit: sale.unit || "Units",
-                unitPrice: (sale.quantity && numAmount) ? (numAmount / sale.quantity) : numAmount,
-                totalAmount: numAmount,
-                amountReceived: numReceived,
-                flockId: matchedFlock?.id,
-                notes: sale.item || sale.product,
-            });
-        } catch (e: any) {
-            console.error("Backend sale record failed:", e.message);
-            throw e;
-        }
-    }
-    return created;
+    return simAddSaleRecord(sale);
 }
 
 export async function recordSalePayment(id: string, amount: number, date?: string, note?: string) {
@@ -759,7 +585,43 @@ export {
     getFeedInventory,
     getFeedUseRecords,
     getFlockRecords,
+    getFlockActivities,
+    getFlockMilestones,
+    getFlockClosures,
+    getFlockTimeline,
+    getFlockPopulationStats,
+    getFlockLifecycleEvents,
+    simAddFlockMilestone as addFlockMilestone,
+    simCloseFlockBatch as closeFlockBatch,
+    simArchiveFlockBatch as archiveFlockBatch,
+    simUpdateFlockRecord as updateFlockRecord,
+    simCreateFlockActivity as createFlockActivity,
+    simUpdateFlockActivityStatus as updateFlockActivityStatus,
+    simUpdateFlockActivity as updateFlockActivity,
     getFlockMovements,
+    getFlockAssignmentHistory,
+    getFlockHouseAssignments,
+    getFarmerFarms,
+    getInventoryItems,
+    getInventoryTransactions,
+    getInventorySuppliers,
+    getInventoryPurchases,
+    getInventoryDashboardSummary,
+    getInventoryForecast,
+    getFarmReportingPreferences,
+    saveFarmReportingPreference,
+    getFarmUpdateReminders,
+    getFarmRecordFreshness,
+    respondToFarmUpdateReminder,
+    simCreateInventoryItem as createInventoryItem,
+    simRecordInventoryTransaction as recordInventoryTransaction,
+    transferInventoryBetweenFarms,
+    simTransferInventoryBetweenLocations as transferInventoryBetweenLocations,
+    simCreateInventorySupplier as createInventorySupplier,
+    simUpdateInventorySupplier as updateInventorySupplier,
+    simAddInventoryPurchase as addInventoryPurchase,
+    simUpdateInventoryItem as updateInventoryItem,
+    getHousePopulation,
     getProductionRecords,
     getOpportunityApplications,
     getInstitutionRequests,
@@ -769,6 +631,10 @@ export {
     getInstitutionDemoAccess,
     getFarmDocuments,
     getPoultryHouses,
+    transferFlockBetweenFarms,
+    simCreateFarmerFarm as createFarmerFarm,
+    simMoveFlockToHouse as moveFlockToHouse,
+    simUpdatePoultryHouseStatus as updatePoultryHouseStatus,
     getSalesRecords,
     saveExpensesRecords,
     saveFarmAssets,
@@ -806,12 +672,24 @@ export type {
     ExpenseEntry,
     FarmAssetRecord,
     FarmHouseRecord,
+    FarmerFarmRecord,
+    InventoryItemRecord,
+    InventoryTransactionRecord,
+    InventorySupplierRecord,
+    InventoryPurchaseRecord,
+    FarmReportingPreference,
+    FarmUpdateReminder,
     FarmFlockMovement,
     FarmDocumentRecord,
     FinancialPaymentRecord,
     FeedPurchaseRecord,
     FeedUseRecord,
     FlockRecord,
+    FlockActivityRecord,
+    FlockMilestoneRecord,
+    FlockClosureRecord,
+    FlockLifecycleRecord,
+    FlockTimelineEntry,
     KycApplication,
     OpportunityApplicationRecord,
     ProductionRecord,

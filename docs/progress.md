@@ -8,10 +8,47 @@ Before beginning Module 1 application changes, the complete available developmen
 - The two plans agree that Module 1 is frontend/mock only and must stop at primary-farm onboarding; Module 2 owns house/flock/inventory workflows. Module 2 permits flock and inventory to operate independently. Later production/health functions extend shared batch identities, and institution workflows follow the farmer/farm foundation.
 - Existing code has a service facade and browser-local simulated workflows for farm profile, houses, flocks/movements, feed/inventory, production and health. These are implemented to varying levels; existing progress/handoff files list validation separately. No claim is made that all plan requirements are implemented or backend connected.
 - Main gap: current farmer auth and farm profile persistence are legacy-shaped; the profile is a single shared record and several operational records lack complete account/farm ownership. Module 1 therefore needs account-scoped onboarding records and an atomic completion service, while preserving demo seed behavior and migrating legacy data safely. GPS/geocoding provider is absent; browser geolocation plus manual farm-location entry is the plan-compatible implementation.
-- A sequencing ambiguity remains in Module 2: it describes house management as the operational foundation, while a later restriction defers some house-management implementation pending separate authorization. This does not block Module 1 and will be respected when Module 2 is taken up. No owner decision is needed for Module 1.
+- The Module 2 plan makes house management the foundation for flock operations and sequences it with flock work in Phase 2; this is confirmed below. No owner decision is needed for Module 1.
 - Module 1 scope remains exactly account/contact-verification demo, resumable setup, farmer profile, primary farm, review and dashboard activation. No backend, migrations, house/batch records, inventory or production work is authorized by this phase.
 
 **Gate result:** architecture synchronization is recorded; Module 1 implementation may proceed within the boundary above.
+
+## Module 2 architecture synchronization and kickoff — in progress (2026-11-14)
+
+Reviewed both current plans in `docs/development-plans/`, `README.md`, `architecture.md`, this progress record, frontend routes/navigation, `services/index.ts`, and `simulated-data.ts` before Module 2 implementation.
+
+- The current Module 2 plan authorizes House and Flock Management together in Phase 2. House Management is the required foundation for batch assignment; it is not deferred. Inventory is an independently usable Phase 3 capability, followed by integration/record freshness in Phase 4.
+- Corrected the stale Module 2 sequencing note in `architecture.md`. No unresolved product decision blocks implementation.
+- The starting implementation had local house, flock, movement, feed, production, health, finance and document workflows. These did not satisfy Module 2: house/flock identity, assignment history, account ownership and multi-farm behavior were incomplete.
+- The existing simulated-data/service architecture remains the sole persistence path. No backend or migration work is in scope. Intelligent record capture remains explicitly excluded.
+
+### Implementation progress
+
+**Status: implementation work completed for the planned core workflows; Phase 5 verification and acceptance remain.** Work follows the updated plan: House and Flock Management in Phase 2, Inventory in Phase 3, integration and freshness in Phase 4. No backend changes were made.
+
+- Added farm records derived from Module 1 onboarding, support for additional farms, and farm selectors and summaries for house, flock and inventory screens.
+- Added stable IDs and owner/farm references for houses and flock batches, required same-farm house assignment, capacity checks, batch movement history, within-farm house assignment history and explicit cross-farm flock transfer.
+- Added a transaction-based inventory balance, opening stock, stock issue/receipt/adjustment/disposal, paired farm and within-farm storage transfers, low-stock/expiry visibility, and a conservative usage estimate when enough issues exist.
+- Connected feed purchase and use records to the shared inventory ledger. Feed consumption allocates stock by expiry date, checks availability, and associates use with a stable batch ID.
+- Linked live-bird sales to stable batch IDs so the sale, population reduction and movement history are saved together in farmer-scoped simulated storage.
+- Scoped house, flock, feed, vaccination, health and treatment simulated collections to the signed-in farmer. Health loss corrections retain the original incident and add a balancing population movement.
+- Added flock activity scheduling with derived overdue status, complete/reschedule/cancel actions, and vaccination follow-up scheduling. Added dated laying milestones for layer and mixed batches.
+- Included Module 2 farm, flock lifecycle, activity, supplier, purchase, inventory and record-reminder data in the existing backup/import flows. Added farms, flock activities, inventory and record-keeping navigation and kept the UI behind the existing service facade and local simulated-data adapter.
+- Added supplier and purchase workflows with linked stock-receipt transactions, payment status, per-farm contact records and item detail editing. Inventory summary cards are derived from recorded stock and purchase data; stock value remains explicitly unavailable when cost data is insufficient.
+- Added per-farm daily/weekly reporting preferences, local-time reminders by Flock and Inventory category, record freshness from saved activity dates, no-activity and unavailable confirmations, completion, snoozing and reminder history. Acknowledgements do not create farm activity records. No SMS/email or background delivery is represented as available.
+- Completed flock batch detail and lifecycle management with a movement-based population/mortality calculation, correction reversals, vaccination/lot details, editable metadata, layer milestones, integrated timeline, closure and archive controls.
+
+**Remaining before Module 2 can be accepted as complete:**
+
+- Perform the full Phase 5 manual/browser acceptance review against the updated plan, including multi-farm/account isolation, transaction balance and reversal edge cases, reminder cadence/snooze behavior, responsive layouts and backup/import/reset behavior.
+- Verify inventory expiry rules across receipts, issues, adjustments, disposals and transfers; verify cost-based estimates remain clearly qualified for transferred stock and partial cost histories.
+- Verify the scheduled-activity product availability prompt and planned-quantity comparison end to end against the updated plan; this check reads stock but does not reserve stock or confirm product suitability.
+- No tests or builds have been run in this pass. The Module 2 implementation is therefore not marked accepted or verified.
+- Reconcile remaining legacy production, sales and other operational records with stable farm/batch references where required by the plan.
+- Complete Phase 5 workflow, isolation, persistence and responsive review and update this status from the results.
+- Phase 1 audit complete. Implementation now establishes farmer-scoped farm/house/batch identities, records house assignments and flock population movements, adds multi-farm navigation, and introduces a transaction-based local inventory ledger with low-stock and expiry indicators. The house detail view includes current occupancy, active batches, reassignment and assignment history.
+- Some legacy health, vaccination and production paths still require ownership and farm-isolation acceptance review. The implementation has not been built or tested in this pass; production acceptance remains pending.
+- No backend code or schema is touched. Intelligent record capture remains explicitly excluded. Implementation has not yet been validated against the plan's Phase 5 acceptance checks.
 
 ### Module 1 implementation — in progress
 

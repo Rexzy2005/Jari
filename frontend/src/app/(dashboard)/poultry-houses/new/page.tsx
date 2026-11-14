@@ -2,11 +2,15 @@
 import { JariSelect } from "@/components/ui/jari-select";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { createPoultryHouse } from "@/services";
+import { useEffect, useState } from "react";
+import { createPoultryHouse, getFarmerFarms } from "@/services";
+import type { FarmerFarmRecord } from "@/services";
 
 const initialForm = {
     houseName: "",
+    houseReference: "",
+    purpose: "Mixed",
+    status: "Active",
     housingSystem: "Deep litter",
     maximumCapacity: "",
     waterSource: "Borehole",
@@ -19,6 +23,9 @@ export default function NewPoultryHousePage() {
     const [form, setForm] = useState(initialForm);
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [farms, setFarms] = useState<FarmerFarmRecord[]>([]);
+    const [farmId, setFarmId] = useState("");
+    useEffect(() => { const available = getFarmerFarms(); setFarms(available); setFarmId(available.find((farm) => farm.isPrimary)?.id || available[0]?.id || ""); }, []);
 
     const handleChange = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) => {
         setForm((previous) => ({ ...previous, [field]: value }));
@@ -29,7 +36,8 @@ export default function NewPoultryHousePage() {
         setError("");
         setIsSubmitting(true);
         try {
-            await createPoultryHouse({ name: form.houseName, system: form.housingSystem, capacity: Number(form.maximumCapacity), water: form.waterSource, feedStorage: form.feedStorage, ventilation: form.ventilation });
+            if (!farmId) throw new Error("Add or complete a farm profile before registering a house.");
+            await createPoultryHouse({ farmId, name: form.houseName, reference: form.houseReference, purpose: form.purpose as "Broiler" | "Layer" | "Mixed" | "Other", status: form.status as "Active" | "Temporarily inactive" | "Under maintenance" | "Closed" | "Archived", system: form.housingSystem, capacity: Number(form.maximumCapacity), water: form.waterSource, feedStorage: form.feedStorage, ventilation: form.ventilation });
             router.push("/poultry-houses");
         } catch (saveError) {
             setError(saveError instanceof Error ? saveError.message : "We could not save this farm house.");
@@ -47,16 +55,21 @@ export default function NewPoultryHousePage() {
 
             <form className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" onSubmit={onSubmit}>
                 <div className="grid gap-5 md:grid-cols-2">
+                    {farms.length > 1 && <label className="label-text">Farm<JariSelect required className="input-shell" value={farmId} onChange={(event) => setFarmId(event.target.value)}>{farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name}</option>)}</JariSelect></label>}
                     <div>
-                        <label className="label-text">House name or reference</label>
+                        <label className="label-text">House name</label>
                         <input
                             className="input-shell"
                             required
                             value={form.houseName}
                             onChange={(event) => handleChange("houseName", event.target.value)}
-                            placeholder="House A"
+                            placeholder="Main broiler house"
                         />
                     </div>
+
+                    <div><label className="label-text">House reference (optional)</label><input className="input-shell" value={form.houseReference} onChange={(event) => handleChange("houseReference", event.target.value)} placeholder="e.g. H-01" /></div>
+
+                    <div><label className="label-text">Purpose</label><JariSelect className="input-shell" value={form.purpose} onChange={(event) => handleChange("purpose", event.target.value)}><option>Broiler</option><option>Layer</option><option>Mixed</option><option>Other</option></JariSelect></div>
 
                     <div>
                         <label className="label-text">Housing system</label>
@@ -76,7 +89,7 @@ export default function NewPoultryHousePage() {
                         <label className="label-text">Maximum bird capacity</label>
                         <input
                             type="number"
-                            min={1}
+                            min={0}
                             required
                             className="input-shell"
                             value={form.maximumCapacity}
@@ -112,6 +125,8 @@ export default function NewPoultryHousePage() {
                             <option>Hybrid system</option>
                         </JariSelect>
                     </div>
+
+                    <div><label className="label-text">Operational status</label><JariSelect className="input-shell" value={form.status} onChange={(event) => handleChange("status", event.target.value)}><option>Active</option><option>Temporarily inactive</option><option>Under maintenance</option><option>Closed</option><option>Archived</option></JariSelect></div>
 
                     <div className="flex items-end">
                         <label className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-700">

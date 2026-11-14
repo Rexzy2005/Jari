@@ -3,14 +3,15 @@ import { JariSelect } from "@/components/ui/jari-select";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createFlockRecord, getPoultryHouses } from "@/services";
-import type { FarmHouseRecord } from "@/services";
+import { createFlockRecord, getFarmerFarms, getFlockRecords, getPoultryHouses } from "@/services";
+import type { FarmHouseRecord, FarmerFarmRecord } from "@/services";
 
 const initialForm = {
     flockName: "",
     poultryType: "Broiler",
     breed: "",
     house: "House A",
+    hatchDate: "",
     acquisitionDate: "",
     source: "",
     initialBirds: "",
@@ -24,10 +25,18 @@ export default function NewBirdsPage() {
     const router = useRouter();
     const [form, setForm] = useState(initialForm);
     const [houses, setHouses] = useState<FarmHouseRecord[]>([]);
+    const [farms, setFarms] = useState<FarmerFarmRecord[]>([]);
+    const [farmId, setFarmId] = useState("");
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => { setHouses(getPoultryHouses()); }, []);
+    useEffect(() => {
+        const availableFarms = getFarmerFarms();
+        const selectedFarm = availableFarms.find((farm) => farm.isPrimary)?.id || availableFarms[0]?.id || "";
+        const availableHouses = getPoultryHouses().filter((house) => house.farmId === selectedFarm && house.status === "Active" && !house.archived);
+        setFarms(availableFarms); setFarmId(selectedFarm); setHouses(availableHouses);
+        setForm((previous) => ({ ...previous, house: availableHouses[0]?.name || "" }));
+    }, []);
 
     const handleChange = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) => {
         setForm((previous) => ({ ...previous, [field]: value }));
@@ -38,16 +47,21 @@ export default function NewBirdsPage() {
         setError("");
         setIsSubmitting(true);
         try {
+            const selectedHouse = houses.find((house) => house.name === form.house);
+            if (!farmId || !selectedHouse) throw new Error("Choose a farm and an active house before registering this group.");
             await createFlockRecord({
+                farmId,
+                houseId: selectedHouse.id,
                 name: form.flockName,
                 type: form.poultryType,
                 breed: form.breed,
                 house: form.house,
+                hatchDate: form.hatchDate || undefined,
                 birds: Number(form.initialBirds),
                 acquisitionDate: form.acquisitionDate,
                 cycleStart: form.cycleStart || form.acquisitionDate,
                 source: form.source,
-                ageAtAcquisition: Number(form.ageAtAcquisition) || undefined,
+                ageAtAcquisition: form.ageAtAcquisition.trim() === "" ? undefined : Number(form.ageAtAcquisition),
                 ageUnit: form.ageUnit,
                 purchaseCost: Number(form.purchaseCost) || 0,
             });
@@ -68,6 +82,9 @@ export default function NewBirdsPage() {
 
             <form className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" onSubmit={onSubmit}>
                 <div className="grid gap-5 md:grid-cols-2">
+                    {farms.length > 1 && <div><label className="label-text">Farm</label><JariSelect className="input-shell" value={farmId} onChange={(event) => { const nextFarmId = event.target.value; const nextHouses = getPoultryHouses().filter((house) => house.farmId === nextFarmId && house.status === "Active" && !house.archived); setFarmId(nextFarmId); setHouses(nextHouses); setForm((previous) => ({ ...previous, house: nextHouses[0]?.name || "" })); }}>
+                        {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name}</option>)}
+                    </JariSelect></div>}
                     <div>
                         <label className="label-text">Flock reference/name</label>
                         <input
@@ -110,7 +127,7 @@ export default function NewBirdsPage() {
                             value={form.house}
                             onChange={(event) => handleChange("house", event.target.value)}
                         >
-                            {houses.map((house) => <option key={house.name}>{house.name}</option>)}
+                            {houses.map((house) => <option key={house.id} value={house.name}>{house.name} · {Math.max(0, house.capacity - getFlockRecords().filter((flock) => flock.houseId === house.id && flock.status === "Active").reduce((total, flock) => total + flock.birds, 0)).toLocaleString()} spaces</option>)}
                         </JariSelect>
                     </div>
 
@@ -124,6 +141,8 @@ export default function NewBirdsPage() {
                             onChange={(event) => handleChange("acquisitionDate", event.target.value)}
                         />
                     </div>
+
+                    <div><label className="label-text">Hatch date (if known)</label><input type="date" className="input-shell" value={form.hatchDate} onChange={(event) => handleChange("hatchDate", event.target.value)} /></div>
 
                     <div>
                         <label className="label-text">Source of birds</label>
