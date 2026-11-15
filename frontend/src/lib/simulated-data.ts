@@ -149,6 +149,7 @@ export type FarmFlockMovement = {
     flock: string;
     flockId?: string;
     house?: string;
+    houseId?: string;
     date: string;
     type: "Initial stocking" | "Bird acquisition" | "Additional stocking" | "Mortality" | "Culling" | "Sale" | "Transfer in" | "Transfer out" | "Adjustment" | "Closure";
     quantity: number;
@@ -471,11 +472,31 @@ export const getFarmerFarms = (): FarmerFarmRecord[] => {
     const userId = currentFarmerId();
     if (!userId) return [];
     const saved = readModule2Collection<FarmerFarmRecord[]>("farms", "jari-simulated-module2-farms", []);
-    if (saved.length) return saved;
     const onboarding = getFarmerOnboarding(userId);
-    if (!onboarding?.farm) return [];
-    const id = onboarding?.primaryFarmId || primaryFarmIdForCurrentUser();
-    return [{ id, userId, name: String(onboarding.farm.farmName || onboarding.farm.name || "My farm"), location: [onboarding.profile?.community, onboarding.profile?.lga, onboarding.profile?.state].filter(Boolean).join(", "), isPrimary: true, createdAt: onboarding.createdAt || new Date(0).toISOString(), updatedAt: onboarding.updatedAt || new Date(0).toISOString() }];
+    const onboardingFarm = onboarding?.farm;
+    const savedPrimary = saved.find((farm) => farm.isPrimary);
+    const primaryFarmId = onboardingFarm
+        ? onboarding.primaryFarmId || onboarding.farmId || primaryFarmIdForCurrentUser()
+        : savedPrimary?.id || primaryFarmIdForCurrentUser();
+    const existingPrimary = saved.find((farm) => farm.id === primaryFarmId);
+    if (!onboardingFarm && existingPrimary) return saved;
+
+    const primaryFarm: FarmerFarmRecord = {
+        id: primaryFarmId,
+        userId,
+        name: String(onboardingFarm?.farmName || onboardingFarm?.name || existingPrimary?.name || "My farm"),
+        location: onboardingFarm
+            ? [onboarding?.profile?.community, onboarding?.profile?.lga, onboarding?.profile?.state].filter(Boolean).join(", ")
+            : existingPrimary?.location || "",
+        isPrimary: true,
+        createdAt: existingPrimary?.createdAt || onboarding?.createdAt || new Date(0).toISOString(),
+        updatedAt: onboarding?.updatedAt || existingPrimary?.updatedAt || new Date(0).toISOString(),
+    };
+
+    // Older accounts may have onboarding data without a Module 2 farm entry, or
+    // may have records keyed to the deterministic primary ID before farm setup.
+    // Reconcile both sources and preserve the primary farm used by existing records.
+    return [primaryFarm, ...saved.filter((farm) => farm.id !== primaryFarmId).map((farm) => ({ ...farm, isPrimary: false }))];
 };
 
 export const createFarmerFarm = (name: string, location = "") => {
@@ -531,7 +552,7 @@ export const closeFlockBatch = (entry: { flockId: string; date: string; reason: 
     if (flock.birds !== 0) throw new Error("Record the remaining birds as sales, removals or transfers before closing this group.");
     const now = new Date().toISOString();
     const closure: FlockClosureRecord = { id: idFor("flock-closure"), userId: currentFarmerId() || flock.userId || "legacy-user", farmId: flock.farmId || primaryFarmIdForCurrentUser(), flockId: flock.id!, date: entry.date, finalPopulation: flock.birds, reason: entry.reason.trim(), notes: entry.notes?.trim() || undefined, createdAt: now };
-    const movement: FarmFlockMovement = { id: idFor("movement"), flock: flock.name, flockId: flock.id, userId: closure.userId, farmId: closure.farmId, houseId: flock.houseId, responsibleUser: closure.userId, createdAt: now, date: entry.date, type: "Closure", quantity: 0, reason: entry.reason.trim(), notes: entry.notes?.trim() };
+    const movement: FarmFlockMovement = { id: idFor("movement"), flock: flock.name, flockId: flock.id, userId: closure.userId, farmId: closure.farmId, house: flock.house, responsibleUser: closure.userId, createdAt: now, date: entry.date, type: "Closure", quantity: 0, reason: entry.reason.trim(), notes: entry.notes?.trim() };
     const lifecycle: FlockLifecycleRecord = { id: idFor("flock-event"), userId: closure.userId, farmId: closure.farmId, flockId: closure.flockId, date: entry.date, event: "Batch closed", details: `${closure.reason} · final recorded population ${closure.finalPopulation}${closure.notes ? ` · ${closure.notes}` : ""}`, createdAt: now };
     commitModule2Collections([["flocks", STORAGE_KEYS.flockRecords, flocks.map((record) => record.id === flock.id ? { ...record, status: "Closed" as const, updatedAt: now } : record)], ["flock-closures", "jari-simulated-flock-closures", [...getFlockClosures(), closure]], ["flock-lifecycle-events", "jari-simulated-flock-lifecycle-events", [...getFlockLifecycleEvents(), lifecycle]], ["flock-movements", STORAGE_KEYS.flockMovements, [...getFlockMovements(), movement]]], `Bird group ${flock.name} closed`);
     return closure;
@@ -565,7 +586,8 @@ export const getFlockPopulationStats = (flockId: string, fromDate?: string, toDa
     const openingPopulation = movements.filter((movement) => movement.date < startDate).reduce((population, movement) => Math.max(0, population + delta(movement)), 0);
     const periodDeaths = movements.filter((movement) => movement.type === "Mortality" && !reversedMovementIds.has(movement.id) && movement.date >= startDate && movement.date <= toDate).reduce((sum, movement) => sum + movement.quantity, 0);
     const otherReductions = movements.filter((movement) => ["Culling", "Sale", "Transfer out"].includes(movement.type)).reduce((sum, movement) => sum + movement.quantity, 0);
-    return { introduced: introductions || flock.initialBirds || 0, deaths: deathCount, otherReductions, openingPopulation, periodDeaths, cumulativeRate: introductions || flock.initialBirds ? deathCount / (introductions || flock.initialBirds) * 100 : null, periodRate: openingPopulation > 0 ? periodDeaths / openingPopulation * 100 : null, fromDate: startDate, toDate };
+    const mortalityDenominator = introductions || flock.initialBirds || 0;
+    return { introduced: mortalityDenominator, deaths: deathCount, otherReductions, openingPopulation, periodDeaths, cumulativeRate: mortalityDenominator > 0 ? deathCount / mortalityDenominator * 100 : null, periodRate: openingPopulation > 0 ? periodDeaths / openingPopulation * 100 : null, fromDate: startDate, toDate };
 };
 
 export const getFlockHouseAssignments = (): FlockHouseAssignment[] => {
@@ -765,7 +787,7 @@ export const recordInventoryTransaction = (transaction: Omit<InventoryTransactio
     if (transaction.purchaseCost !== undefined && (!Number.isFinite(transaction.purchaseCost) || transaction.purchaseCost < 0)) throw new Error("Enter a valid purchase cost.");
     if (transaction.type !== "Stock received" && (transaction.purchaseCost !== undefined || transaction.supplier?.trim())) throw new Error("Supplier and purchase cost can only be recorded for stock received.");
     if (transaction.amountPaid !== undefined && (!Number.isFinite(transaction.amountPaid) || transaction.amountPaid < 0 || transaction.purchaseCost === undefined || transaction.amountPaid > transaction.purchaseCost)) throw new Error("Amount paid must be between zero and the recorded purchase cost.");
-    const decreases = transaction.type === "Stock issued" || transaction.type === "Transfer out" || transaction.type === "Disposal" || (transaction.type === "Adjustment" && transaction.adjustmentDirection === "Decrease");
+    const decreases = transaction.type === "Stock issued" || transaction.type === "Disposal" || (transaction.type === "Adjustment" && transaction.adjustmentDirection === "Decrease");
     const amount = Math.abs(transaction.quantity);
     if (decreases && amount > item.currentQuantity) throw new Error(`Only ${item.currentQuantity} ${item.unit} are currently available.`);
     const created: InventoryTransactionRecord = { ...transaction, quantity: amount, id: idFor("inventory-transaction"), userId, unit: item.unit, createdAt: new Date().toISOString() };
@@ -912,7 +934,7 @@ export const transferFlockBetweenFarms = (transfer: { flockId: string; destinati
         { id: `${pairId}-in`, flock: destination.name, flockId: destination.id, farmId: destination.farmId, houseId: destination.houseId, userId, responsibleUser: userId, createdAt: now, date: transfer.date, type: "Transfer in", quantity, reason: transfer.reason.trim(), notes },
     ];
     const assignments = getFlockHouseAssignments().filter((record) => !record.id.startsWith("opening-assignment-"));
-    assignments.push({ id: idFor("house-assignment"), userId, farmId: destination.farmId, flockId: destination.id!, fromHouseId: null, toHouseId: destinationHouse.id!, effectiveDate: transfer.date, reason: `Received via ${pairId}`, createdAt: now });
+    assignments.push({ id: idFor("house-assignment"), userId, farmId: destinationFarm.id, flockId: destination.id!, fromHouseId: null, toHouseId: destinationHouse.id!, effectiveDate: transfer.date, reason: `Received via ${pairId}`, createdAt: now });
     commitModule2Collections([["flocks", STORAGE_KEYS.flockRecords, nextFlocks], ["flock-movements", STORAGE_KEYS.flockMovements, [...movements, ...pair]], ["flock-house-assignments", "jari-simulated-flock-house-assignments", assignments]], `Transferred ${quantity.toLocaleString()} birds from ${source.name} to ${destination.name} on ${destinationFarm.name}`);
     return { reference: pairId, flock: destination, movements: pair };
 };
@@ -1583,7 +1605,7 @@ export const importDemoDatabase = (value: unknown) => {
     if (!value || typeof value !== "object") throw new Error("Choose a valid JARI backup file.");
     const snapshot = value as Record<string, unknown>;
     if (snapshot.version !== storageSchemaVersion) throw new Error("This backup version is not supported.");
-    const schemas: Record<string, Record<string, "string" | "number" | "boolean">> = {
+    const schemas: Record<string, Record<string, "string" | "number" | "boolean" | "object">> = {
         poultryHouses: { name: "string", system: "string", capacity: "number", water: "string", feedStorage: "boolean" },
         flocks: { name: "string", type: "string", house: "string", birds: "number", status: "string" },
         flockMovements: { id: "string", flock: "string", date: "string", type: "string", quantity: "number", reason: "string" },

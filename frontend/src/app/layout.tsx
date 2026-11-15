@@ -20,12 +20,9 @@ export const metadata: Metadata = {
   title: "JARI | Farm intelligence for poultry farmers",
   description: "Organize poultry farm records, understand operations and prepare for financial opportunities with JARI.",
   icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon.svg", type: "image/svg+xml" },
-    ],
-    shortcut: "/favicon.ico",
-    apple: "/icon.svg",
+    icon: { url: "/logo/JARI_navbar_logo.png", type: "image/png" },
+    shortcut: { url: "/logo/JARI_navbar_logo.png", type: "image/png" },
+    apple: { url: "/logo/JARI_navbar_logo.png", type: "image/png" },
   },
 };
 

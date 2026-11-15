@@ -158,6 +158,33 @@ textarea:focus {
   height: 100dvh;
 }
 
+/* Short, layout-neutral entrance for the auth frame and its content. */
+.auth-frame { animation: auth-frame-reveal 520ms cubic-bezier(.2, .72, .22, 1) both; }
+.auth-visual > img { animation: auth-image-reveal 900ms cubic-bezier(.2, .72, .22, 1) both; }
+.auth-visual > :not(img) { animation: auth-content-reveal 620ms cubic-bezier(.2, .72, .22, 1) both; }
+.auth-visual > :nth-child(4) { animation-delay: 100ms; }
+.auth-visual > :nth-child(5) { animation-delay: 190ms; }
+.auth-content > header,
+.auth-content-main > nav,
+.auth-content-main > :not(nav),
+.auth-content > footer { animation: auth-content-reveal 480ms cubic-bezier(.2, .72, .22, 1) both; }
+.auth-content-main > :nth-child(1) { animation-delay: 70ms; }
+.auth-content-main > :nth-child(2) { animation-delay: 130ms; }
+.auth-content-main > :nth-child(3) { animation-delay: 190ms; }
+
+@keyframes auth-frame-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes auth-content-reveal {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes auth-image-reveal {
+  from { opacity: .72; transform: scale(1.025); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 html:has(.auth-page),
 body:has(.auth-page) { overflow: hidden; }
 

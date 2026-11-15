@@ -26,6 +26,8 @@ Reviewed both current plans in `docs/development-plans/`, `README.md`, `architec
 
 **Status: implementation work completed for the planned core workflows; Phase 5 verification and acceptance remain.** Work follows the updated plan: House and Flock Management in Phase 2, Inventory in Phase 3, integration and freshness in Phase 4. No backend changes were made.
 
+- Navigation is limited to the current farmer-facing Module 1 and Module 2 scope: dashboard, farm profile, farms/houses, flocks/care, feed, inventory and record keeping. Other farmer destinations and admin/institution destinations remain visible with a disabled **Soon** badge until their modules are implemented and accepted. This activation rule is also recorded in [active.md](active.md).
+
 - Added farm records derived from Module 1 onboarding, support for additional farms, and farm selectors and summaries for house, flock and inventory screens.
 - Added stable IDs and owner/farm references for houses and flock batches, required same-farm house assignment, capacity checks, batch movement history, within-farm house assignment history and explicit cross-farm flock transfer.
 - Added a transaction-based inventory balance, opening stock, stock issue/receipt/adjustment/disposal, paired farm and within-farm storage transfers, low-stock/expiry visibility, and a conservative usage estimate when enough issues exist.

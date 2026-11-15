@@ -26,7 +26,7 @@ export function FlockMovementDialog({ flocks, onClose, onSaved }: { flocks: Floc
     try {
       const selected = flocks.find((item) => item.id === flockId);
       if (!selected?.id) throw new Error("Choose a bird group.");
-      await addFlockMovement({ flock: selected.name, flockId: selected.id, farmId: selected.farmId, houseId: selected.houseId, type, adjustmentDirection: type === "Adjustment" ? adjustmentDirection : undefined, date, quantity: Number(quantity), reason: reason.trim(), notes: notes.trim() || undefined });
+      await addFlockMovement({ flock: selected.name, flockId: selected.id, farmId: selected.farmId, house: selected.house, type, adjustmentDirection: type === "Adjustment" ? adjustmentDirection : undefined, date, quantity: Number(quantity), reason: reason.trim(), notes: notes.trim() || undefined });
       onSaved();
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : "We could not save this bird record.";

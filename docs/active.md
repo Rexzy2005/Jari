@@ -8,6 +8,10 @@ Architecture synchronization is complete and recorded in `progress.md` and `arch
 
 Auth pages must fit the available viewport without clipping, page scrolling, or hidden controls at any supported viewport size. Every form field and primary action must remain visible and reachable. When a flow is too long, split it into clear steps before reducing the design's spacing. Show validation and account-level errors in the global toast layer so messages never change form height. Never solve overflow by hiding or clipping required fields or the submit button. Check both sign-in and every registration account type on desktop and mobile after auth changes.
 
+## Standing module navigation rule
+
+Keep navigation enabled only for capabilities implemented in the current, approved development modules. Keep future or out-of-scope destinations visible with a **Soon** badge and render them as disabled, non-interactive items; do not leave them as working links. When a later module implements and accepts a capability, update every relevant role navigation in that same module work: remove **Soon**, enable the destination, and confirm it reaches the completed workflow. Do not mark a navigation item ready based on a placeholder page or a partial flow. Include this navigation activation check in each later module's completion review.
+
 This tracker continues the work in `frontend-fix.md`. The application is frontend-only: use simulated services and browser storage; do not add or change backend code.
 
 ## Current status

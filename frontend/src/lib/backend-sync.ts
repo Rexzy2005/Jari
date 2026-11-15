@@ -81,8 +81,6 @@ export function backendToHouse(b: any): FarmHouseRecord {
     feedStorage: b.feed_storage ?? true,
     ventilation: b.ventilation || "Natural ventilation",
     archived: b.is_archived ?? false,
-    birds: b.current_birds ?? 0,
-    availableCapacity: b.available_capacity ?? b.capacity,
   };
 }
 
@@ -503,8 +501,6 @@ export async function backendCreatePoultryHouse(house: {
       feedStorage: house.feedStorage ?? true,
       ventilation: house.ventilation,
       archived: false,
-      birds: 0,
-      availableCapacity: house.capacity,
     };
   }
 

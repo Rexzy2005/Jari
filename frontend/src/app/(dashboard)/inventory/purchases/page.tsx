@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ArrowLeft, Plus } from "lucide-react";
 import { JariSelect } from "@/components/ui/jari-select";
 import { addInventoryPurchase, getFarmerFarms, getInventoryItems, getInventoryPurchases, getInventorySuppliers } from "@/services";
-import type { FarmerFarmRecord, InventoryPurchaseRecord } from "@/services";
+import type { FarmerFarmRecord, InventoryPurchaseRecord, InventorySupplierRecord } from "@/services";
 
 const money = (amount?: number) => amount === undefined ? "Not recorded" : new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 2 }).format(amount);
 
