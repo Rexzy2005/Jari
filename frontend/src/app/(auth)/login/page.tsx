@@ -130,7 +130,7 @@ export default function LoginPage() {
           disabled={isSubmitting}
           className="mt-1 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#244b35] px-4 py-3 text-sm font-semibold text-white shadow-[0_8px_18px_-12px_rgba(36,75,53,.8)] transition-all hover:-translate-y-0.5 hover:bg-[#193d2b] disabled:cursor-not-allowed disabled:bg-[#81947f] disabled:hover:translate-y-0"
         >
-          {isSubmitting ? "Signing in..." : "Sign in to JARI"}
+          {isSubmitting ? "Signing in..." : "Sign in to Jari"}
           {!isSubmitting && <ArrowRight size={16} />}
         </button>
       </form>

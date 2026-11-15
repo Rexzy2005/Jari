@@ -11,7 +11,7 @@ export function PublicHeader({ currentPage = "home" }: PublicHeaderProps) {
   return (
     <header className="sticky top-0 z-30 bg-[#fbfbf8]/95 backdrop-blur-sm">
       <nav aria-label="Main navigation" className="mx-auto flex min-h-[68px] max-w-7xl items-center justify-between gap-2 px-4 sm:min-h-[76px] sm:gap-3 sm:px-8">
-        <Link href="/" aria-label="JARI home" className="shrink-0"><JariLogo size={25} /></Link>
+        <Link href="/" aria-label="Jari home" className="shrink-0"><JariLogo size={25} /></Link>
         <div className="flex items-center gap-0.5 sm:gap-1 md:gap-3">
           <Link href={homeAnchor("how-it-works")} className="hidden rounded-full px-3 py-2 text-sm font-semibold text-[#465649] transition-colors hover:text-[#1d402b] md:inline-flex">How it works</Link>
           <Link href={homeAnchor("services")} className="hidden rounded-full px-3 py-2 text-sm font-semibold text-[#465649] transition-colors hover:text-[#1d402b] md:inline-flex">Services</Link>

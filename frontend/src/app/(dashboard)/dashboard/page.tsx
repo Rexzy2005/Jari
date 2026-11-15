@@ -13,7 +13,7 @@ import type { FarmerOnboardingRecord } from "@/services";
 const startCards = [
   { title: "Add your birds", detail: "Keep track of the birds you are raising.", href: "/birds", icon: Bird },
   { title: "Record farm spending", detail: "Write down feed, medicine and other costs.", href: "/expenses", icon: Wallet },
-  { title: "Get a farm review", detail: "Ask JARI to review your farm details.", href: "/kyc", icon: ClipboardCheck },
+  { title: "Get a farm review", detail: "Ask Jari to review your farm details.", href: "/kyc", icon: ClipboardCheck },
 ];
 
 export default function DashboardPage() {
@@ -51,7 +51,7 @@ export default function DashboardPage() {
     return <div className="mx-auto max-w-4xl space-y-5">
       <div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#587354]">Farmer workspace</p><h1 className="mt-2 font-serif text-3xl text-[#20291f]">Your farm is registered.</h1><p className="mt-2 text-sm text-[#737d70]">Your dashboard will fill in as you record real farm activity.</p></div>
       <section className="rounded-3xl bg-[#244b35] p-6 text-white sm:p-8"><p className="text-xs font-semibold uppercase tracking-wider text-white/70">Primary farm</p><h2 className="mt-2 break-words font-serif text-3xl">{farmName}</h2><p className="mt-2 text-sm text-white/75">{farmLocation || "Farm location saved"}</p><p className="mt-5 text-sm">{onboardingAccount.farm?.production} · {onboardingAccount.farm?.operatingStatus}</p></section>
-      <section className="rounded-3xl border border-slate-200 bg-white p-6"><h2 className="text-lg font-semibold text-slate-900">Start adding farm records</h2><p className="mt-2 text-sm leading-6 text-slate-600">There are no flock, inventory, production or financial records in this account yet. Add information as it becomes available; JARI will not fill in estimates.</p><Link href="/feed" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#244b35] px-5 text-sm font-semibold text-white">Inventory setup <ArrowRight size={16}/></Link></section>
+      <section className="rounded-3xl border border-slate-200 bg-white p-6"><h2 className="text-lg font-semibold text-slate-900">Start adding farm records</h2><p className="mt-2 text-sm leading-6 text-slate-600">There are no flock, inventory, production or financial records in this account yet. Add information as it becomes available; Jari will not fill in estimates.</p><Link href="/feed" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#244b35] px-5 text-sm font-semibold text-white">Inventory setup <ArrowRight size={16}/></Link></section>
     </div>;
   }
   const farmLocation = [farm.community, farm.lga, farm.state].filter(Boolean).join(", ");

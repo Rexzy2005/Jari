@@ -7,8 +7,8 @@ import { PublicHeader } from "@/components/layout/public-header";
 import { ScrollReveal } from "@/components/landing/scroll-reveal";
 
 export const metadata: Metadata = {
-  title: "About JARI | Poultry farm intelligence and finance",
-  description: "Learn how JARI organizes poultry farm data into risk insights, local advisory and pathways to finance and insurance.",
+  title: "About Jari | Poultry farm intelligence and finance",
+  description: "Learn how Jari organizes poultry farm data into risk insights, local advisory and pathways to finance and insurance.",
 };
 
 const steps = [
@@ -33,10 +33,10 @@ export default function AboutPage() {
           <ScrollReveal><div className="max-w-2xl">
             <p className="inline-flex items-center gap-2 rounded-full bg-[#edf1e8] px-3.5 py-2 text-[10px] font-bold uppercase tracking-[.15em] text-[#4b6749]"><MapPin size={13} /> Jos South · Plateau State</p>
             <h1 className="mt-5 font-serif text-[2.65rem] font-medium leading-[1.02] tracking-[-.045em] sm:text-5xl lg:text-6xl">Make poultry farms easier to understand and support.</h1>
-            <p className="mt-5 max-w-xl text-sm leading-6 text-[#657064] sm:text-base sm:leading-7">JARI is an agricultural risk intelligence and finance platform. We bring farm information together to make poultry operations more transparent, measurable and risk-aware.</p>
+            <p className="mt-5 max-w-xl text-sm leading-6 text-[#657064] sm:text-base sm:leading-7">Jari is an agricultural risk intelligence and finance platform. We bring farm information together to make poultry operations more transparent, measurable and risk-aware.</p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link href="/#how-it-works" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#244b35] px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#193d2b]">See how it works <ArrowRight size={14} /></Link>
-              <Link href="#contact" className="inline-flex min-h-11 items-center justify-center rounded-full px-5 py-2.5 text-xs font-semibold text-[#49634a] transition-colors hover:bg-[#edf1e8]">Talk with JARI</Link>
+              <Link href="#contact" className="inline-flex min-h-11 items-center justify-center rounded-full px-5 py-2.5 text-xs font-semibold text-[#49634a] transition-colors hover:bg-[#edf1e8]">Talk with Jari</Link>
             </div>
           </div></ScrollReveal>
 
@@ -58,7 +58,7 @@ export default function AboutPage() {
 
       <section id="how-it-works" className="scroll-mt-24 bg-[#f1f2f0] px-5 py-14 sm:px-8 sm:py-20">
         <div className="mx-auto max-w-7xl">
-          <ScrollReveal className="max-w-2xl"><div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">What JARI does</p><h2 className="mt-3 font-serif text-3xl leading-[1.05] tracking-[-.035em] sm:text-5xl">From farm information to informed support.</h2><p className="mt-4 max-w-xl text-sm leading-6 text-[#697268]">Farmers add information as they go. JARI organizes it into a profile that helps make each operation easier to assess and support.</p></div></ScrollReveal>
+          <ScrollReveal className="max-w-2xl"><div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">What Jari does</p><h2 className="mt-3 font-serif text-3xl leading-[1.05] tracking-[-.035em] sm:text-5xl">From farm information to informed support.</h2><p className="mt-4 max-w-xl text-sm leading-6 text-[#697268]">Farmers add information as they go. Jari organizes it into a profile that helps make each operation easier to assess and support.</p></div></ScrollReveal>
           <div className="mt-8 grid gap-3 md:mt-11 md:grid-cols-3 md:gap-4">
             {steps.map(({ number, icon: Icon, title, description }, index) => <ScrollReveal key={number} delay={index * 100}><article className="flex h-full flex-col rounded-[1.35rem] bg-white p-5 sm:p-7">
               <div className="flex items-center justify-between"><span className="text-[12px] font-bold tracking-[.16em] text-[#82907c]">{number}</span><span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#edf1e8] text-[#52744e]"><Icon size={18} /></span></div>
@@ -85,7 +85,7 @@ export default function AboutPage() {
 
       <section className="bg-[#244b35] px-5 py-12 text-white sm:px-8 sm:py-16">
         <ScrollReveal><div className="mx-auto grid max-w-7xl gap-5 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-10">
-          <div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#cbd9c3]">Starting locally</p><h2 className="mt-2 font-serif text-2xl leading-tight sm:text-3xl">Jos South, Plateau State, Nigeria.</h2><p className="mt-2 max-w-xl text-xs leading-5 text-white/75 sm:text-sm sm:leading-6">JARI is starting with poultry farmers in Jos South, with localized agricultural advisory shaped around local farm conditions.</p></div>
+          <div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#cbd9c3]">Starting locally</p><h2 className="mt-2 font-serif text-2xl leading-tight sm:text-3xl">Jos South, Plateau State, Nigeria.</h2><p className="mt-2 max-w-xl text-xs leading-5 text-white/75 sm:text-sm sm:leading-6">Jari is starting with poultry farmers in Jos South, with localized agricultural advisory shaped around local farm conditions.</p></div>
           <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-xs font-semibold text-white"><MapPin size={14} className="text-[#d5e2c9]" /> Jos South</span>
         </div></ScrollReveal>
       </section>
@@ -94,13 +94,13 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl">
           <ScrollReveal className="max-w-2xl"><div>
             <p className="inline-flex -rotate-2 rounded-full bg-[#dce8d3] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-[#4b6749]">Small team, big ideas</p>
-            <h2 className="mt-4 font-serif text-3xl leading-[1.05] tracking-[-.035em] sm:text-5xl">The folks behind JARI.</h2>
+            <h2 className="mt-4 font-serif text-3xl leading-[1.05] tracking-[-.035em] sm:text-5xl">The folks behind Jari.</h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-[#697268]">A little about the people building a clearer path from farm information to practical support.</p>
           </div></ScrollReveal>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3 lg:items-start lg:gap-7">
             {teamMembers.map((member, index) => <ScrollReveal key={member.name} delay={index * 90}><article className={`team-card group relative grid min-h-[180px] grid-cols-[38%_1fr] overflow-hidden rounded-[1.6rem] ${member.cardStyle} sm:block sm:min-h-0 sm:rounded-[2rem] sm:p-3`}>
               <div className="team-headshot relative min-h-full overflow-hidden bg-white/40 sm:aspect-[4/3] sm:min-h-0 sm:rounded-[1.35rem]">
-                <Image src={member.image} alt={`${member.name}, ${member.role} of JARI`} fill sizes="(max-width: 640px) 38vw, (max-width: 1024px) 44vw, 30vw" className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
+                <Image src={member.image} alt={`${member.name}, ${member.role} of Jari`} fill sizes="(max-width: 640px) 38vw, (max-width: 1024px) 44vw, 30vw" className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
               </div>
               <div className="flex flex-col justify-center px-3 py-4 sm:px-3 sm:pb-3 sm:pt-4">
                 <span className="w-fit rounded-full bg-white/75 px-2.5 py-1 text-[8px] font-bold uppercase tracking-[.12em] text-[#55714f] sm:text-[9px]">{member.role}</span>
@@ -114,7 +114,7 @@ export default function AboutPage() {
 
       <section id="contact" className="scroll-mt-24 px-5 py-12 sm:px-8 sm:py-16">
         <ScrollReveal><div className="mx-auto flex max-w-7xl flex-col justify-between gap-5 rounded-[1.4rem] bg-[#e9ede5] px-5 py-6 sm:flex-row sm:items-center sm:gap-10 sm:px-8 sm:py-8">
-          <div className="max-w-xl"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">Talk with JARI</p><h2 className="mt-2 font-serif text-2xl leading-tight tracking-[-.025em] sm:text-3xl">Let&apos;s start with your farm.</h2><p className="mt-2 text-xs leading-5 text-[#697268] sm:text-sm sm:leading-6">Ask us about onboarding, local advisory or working with JARI.</p></div>
+          <div className="max-w-xl"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">Talk with Jari</p><h2 className="mt-2 font-serif text-2xl leading-tight tracking-[-.025em] sm:text-3xl">Let&apos;s start with your farm.</h2><p className="mt-2 text-xs leading-5 text-[#697268] sm:text-sm sm:leading-6">Ask us about onboarding, local advisory or working with Jari.</p></div>
           <div className="flex flex-col gap-2 sm:min-w-[240px]"><a href="mailto:info@jari.com" className="rounded-xl bg-white/70 px-4 py-3 text-xs font-semibold text-[#344536] transition-colors hover:bg-white">Email <span className="ml-2 font-medium text-[#697268]">info@jari.com</span></a><a href="tel:+2348133153568" className="rounded-xl bg-white/70 px-4 py-3 text-xs font-semibold text-[#344536] transition-colors hover:bg-white">Call <span className="ml-2 font-medium text-[#697268]">0813 315 3568</span></a></div>
         </div></ScrollReveal>
       </section>

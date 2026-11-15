@@ -1,5 +1,46 @@
 # JARI Frontend Progress
 
+## Module 3 — Production and Performance Management — Core implementation complete; Phase 5 acceptance remains (2026-11-15)
+
+### Phase 1: Architecture review, documentation synchronisation and data modelling — Completed
+
+- Reviewed the current Module 1 and Module 2 development plans, Module 3 plan, shared architecture, current progress tracker, frontend documentation, README, auth/session handling, farm/house/batch services, inventory/feed records, production screens, service facade and navigation.
+- Confirmed the product boundary: frontend simulation only, persisted through the existing `services/index.ts` and `simulated-data.ts` architecture; no backend or alternate storage layer.
+- Confirmed Farm → Houses → Batches as the operational hierarchy. Existing Module 2 movement, assignment and inventory transaction histories remain authoritative for populations and stock.
+- Existing production UI and `ProductionRecord` are a legacy mixed record keyed by flock display name, saved in shared legacy storage, and combine eggs, weights and birds-ready figures. It cannot safely provide account-scoped, batch-attributed records and must be retained as legacy history rather than counted as normalized Module 3 data without a verifiable relationship.
+- Required model additions: account-scoped production record base; egg collections and classifications; weight measurements with sample method and units; feed-consumption entries linked to inventory transactions where stock is issued; reusable derived summaries, performance availability explanations and rule-based alerts.
+- Architectural conflict found: legacy feed-use and production collections are not consistently account-scoped or batch-ID based. New Module 3 data will use existing account-scoped Module 2 collection helpers, while existing inventory transaction IDs prevent duplicate stock issues.
+- Updated `architecture.md` with Module 3 ownership, source-of-truth and calculation rules. README will be updated after feature delivery to describe only completed capabilities.
+- Existing service and UI components to reuse: `getFarmerFarms`, `getPoultryHouses`, `getFlockRecords`, `getFlockMovements`, `getFlockPopulationStats`, `getInventoryItems`, `getInventoryTransactions`, `recordInventoryTransaction`, `JariSelect`, the dashboard role shell, and the existing production route structure.
+- No outstanding product decision blocks implementation. No backend changes are in scope.
+
+### Phase 2: Production dashboard and core production record management — Implemented
+
+- Added account-scoped, versioned egg collection, weight, feed consumption, target, and history records through the existing simulated-data adapter and service facade.
+- Enforced ownership and Farm → House → Batch relationships, batch category, valid dates, positive quantities, classification totals, and duplicate daily measurements. Support actual/estimated records, historical entries and retained archives.
+- Built farm, house, batch, category and date filters with meaningful empty states; added create, view, edit, archive and filtered history flows. Batch details deep-link to the matching production workspace.
+
+### Phase 3: Layer and broiler production management — Implemented
+
+- Added daily egg totals with optional marketable/rejected classifications, recorded live hens and egg weight; calculated egg summaries, laying rate and eggs per bird where population inputs support it.
+- Added individual, group, sample and group-total weights, grams/kilograms conversion, sample sizes, weight history and measured gain/daily gain explanations.
+- Added farmer-entered broiler weight/age and layer start-of-lay targets. Existing Module 2 layer milestones remain the batch lifecycle history source.
+
+### Phase 4: Feed consumption and performance analytics — Implemented
+
+- Added manual feed records and inventory-backed issues. Inventory issues deduct once; record edits and archives reverse the original stock movement and apply corrections atomically with the production change.
+- Added layer and broiler indicators, period-scoped batch/house/farm comparisons, sample-vs-flock explanations, conservative FCR availability, and record-freshness observations based only on saved records.
+- Added daily production/weight trends and CSV export of the currently filtered history with farm/house/batch names, categories, period, status and notes.
+
+### Phase 5: Full testing, refinement and completion — In Progress
+
+- Updated README and architecture to document the source-of-truth boundary, module behavior and legacy-record limitation. Activated the production sidebar entry and kept future modules marked Soon.
+- `cmd.exe /c node_modules\\.bin\\tsc.cmd --noEmit` passed.
+- `cmd.exe /c npm run build` passed; Next.js compiled and generated all 52 routes, including `/production` and batch detail pages.
+- Automated production workflow tests and responsive browser review were not run in this pass. Current week/month versus previous period comparisons are not yet available; existing analytics compare batches, houses and farms for the selected date range. Phase 5 manual acceptance remains outstanding before claiming the module is fully accepted for release.
+
+**Known constraints:** Browser localStorage is limited to one browser/profile and is not backend security or cross-device synchronization. Legacy production records lack reliable ownership and farm/house/batch relationships, so they are retained but excluded from normalized performance summaries. Alerts currently report record freshness; they do not claim causal or disease insights. CSV is a basic record export; it does not fabricate missing indicators. Historical period-to-period comparison and responsive manual acceptance still need review.
+
 ## Module 1/2 architecture synchronization — completed 2026-11-13
 
 Before beginning Module 1 application changes, the complete available development-plan folder was reviewed: `JARI_Module_1_Updated.md` and `JARI_Module_2_Updated.md`. README, frontend progress/handoff documents, current frontend documentation, and the relevant auth, dashboard, farm form, service-facade and simulated-data implementation were inspected.

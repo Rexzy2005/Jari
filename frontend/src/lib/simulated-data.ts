@@ -80,6 +80,105 @@ export type ProductionRecord = {
     notes?: string;
 };
 
+export type ProductionCategory = "Broiler" | "Layer" | "Mixed";
+export type ProductionMeasurementStatus = "Actual" | "Estimated";
+export type ProductionRecordBase = {
+    id: string;
+    userId: string;
+    farmId: string;
+    houseId: string;
+    batchId: string;
+    category: ProductionCategory;
+    date: string;
+    measurementStatus: ProductionMeasurementStatus;
+    notes?: string;
+    createdBy: string;
+    createdAt: string;
+    updatedAt: string;
+    archivedAt?: string;
+};
+export type EggCollectionRecord = ProductionRecordBase & {
+    totalEggs: number;
+    marketableEggs?: number;
+    brokenEggs?: number;
+    crackedEggs?: number;
+    dirtyEggs?: number;
+    rejectedEggs?: number;
+    liveHensAtCollection?: number;
+    averageEggWeightGrams?: number;
+};
+export type WeightMeasurementMethod = "Individual birds" | "Group average" | "Group total" | "Sample average";
+export type WeightRecord = ProductionRecordBase & {
+    category: "Broiler";
+    sampleSize: number;
+    averageWeightKg: number;
+    totalSampleWeightKg: number;
+    method: WeightMeasurementMethod;
+    individualWeightsKg?: number[];
+};
+export type FeedConsumptionSource = "Inventory issue" | "Manual record";
+export type ProductionFeedConsumptionRecord = ProductionRecordBase & {
+    quantityKg: number;
+    quantityEntered: number;
+    unitEntered: "kg" | "g" | "bags";
+    bagWeightKg?: number;
+    source: FeedConsumptionSource;
+    inventoryItemId?: string;
+    inventoryTransactionId?: string;
+    feedType: string;
+    recordedCost?: number;
+};
+export type ProductionTargetRecord = {
+    id: string;
+    userId: string;
+    farmId: string;
+    houseId: string;
+    batchId: string;
+    targetWeightKg?: number;
+    targetAgeDays?: number;
+    expectedStartOfLay?: string;
+    source: "Farmer entered";
+    updatedAt: string;
+};
+export type ProductionRecordKind = "Egg collection" | "Weight measurement" | "Feed consumption";
+export type ProductionHistoryEntry = {
+    id: string;
+    kind: ProductionRecordKind;
+    category: ProductionCategory;
+    farmId: string;
+    houseId: string;
+    batchId: string;
+    date: string;
+    summary: string;
+    measurementStatus: ProductionMeasurementStatus;
+    notes?: string;
+    createdAt: string;
+    archivedAt?: string;
+};
+export type ProductionIndicator = {
+    key: string;
+    label: string;
+    value: number | null;
+    unit: string;
+    status: "Available" | "Unavailable";
+    explanation: string;
+    periodStart: string;
+    periodEnd: string;
+    dataCompleteness: "Complete" | "Partial" | "Missing";
+};
+export type ProductionAlertRecord = {
+    key: string;
+    userId: string;
+    farmId: string;
+    houseId: string;
+    batchId: string;
+    category: ProductionCategory;
+    severity: "Information" | "Attention";
+    title: string;
+    description: string;
+    triggeredAt: string;
+};
+
 export type FarmHouseRecord = {
     id?: string;
     userId?: string;
@@ -367,7 +466,7 @@ const readStorage = <T,>(key: string, fallback: T): T => {
         const stored = window.localStorage.getItem(versioned);
         if (stored) return JSON.parse(stored) as T;
 
-        // One-time migration keeps demo records created by earlier JARI builds.
+        // One-time migration keeps demo records created by earlier Jari builds.
         const legacy = window.localStorage.getItem(key);
         if (legacy) {
             window.localStorage.setItem(versioned, legacy);
@@ -1456,6 +1555,434 @@ export const getFlockTimeline = (flockId: string): FlockTimelineEntry[] => {
     return [...movements, ...vaccines, ...activities, ...health, ...care, ...milestones, ...sales, ...closures, ...lifecycle].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
 };
 
+const PRODUCTION_COLLECTIONS = {
+    eggs: ["production-egg-collections", "jari-production-egg-collections"],
+    weights: ["production-weight-records", "jari-production-weight-records"],
+    feed: ["production-feed-consumption", "jari-production-feed-consumption"],
+    targets: ["production-targets", "jari-production-targets"],
+} as const;
+
+export type ProductionFilters = { farmId?: string; houseId?: string; batchId?: string; category?: ProductionCategory; fromDate?: string; toDate?: string; includeArchived?: boolean };
+export type EggCollectionInput = Omit<EggCollectionRecord, "id" | "userId" | "createdBy" | "createdAt" | "updatedAt" | "archivedAt" | "farmId" | "houseId" | "category"> & { farmId: string; houseId: string; batchId: string; category?: "Layer"; allowHistorical?: boolean };
+export type WeightRecordInput = Omit<WeightRecord, "id" | "userId" | "createdBy" | "createdAt" | "updatedAt" | "archivedAt" | "farmId" | "houseId" | "category" | "averageWeightKg" | "totalSampleWeightKg" | "individualWeightsKg"> & { farmId: string; houseId: string; batchId: string; category?: "Broiler"; averageWeightKg?: number; totalSampleWeightKg?: number; totalSampleWeight?: number; weightUnit?: "kg" | "g"; individualWeights?: number[]; allowHistorical?: boolean };
+export type ProductionFeedInput = { farmId: string; houseId: string; batchId: string; date: string; feedType: string; quantity: number; unit: "kg" | "g" | "bags"; bagWeightKg?: number; source: FeedConsumptionSource; inventoryItemId?: string; recordedCost?: number; measurementStatus?: ProductionMeasurementStatus; notes?: string; allowHistorical?: boolean };
+export type ProductionFeedEditInput = Omit<ProductionFeedInput, "farmId" | "houseId" | "batchId">;
+export type WeightRecordEditInput = Pick<WeightRecordInput, "date" | "measurementStatus" | "notes" | "sampleSize" | "method" | "averageWeightKg" | "totalSampleWeight" | "weightUnit" | "individualWeights">;
+
+const isCalendarDate = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(Date.parse(`${date}T00:00:00.000Z`)) && new Date(`${date}T00:00:00.000Z`).toISOString().slice(0, 10) === date;
+const productionRecordDateIsValid = (date: string) => isCalendarDate(date) && date <= new Date().toISOString().slice(0, 10);
+const productionCategoryForFlock = (flock: FlockRecord): ProductionCategory | "Mixed" | null => {
+    const value = `${flock.type} ${flock.category || ""}`.toLowerCase();
+    if (value.includes("broiler")) return "Broiler";
+    if (value.includes("layer")) return "Layer";
+    if (value.includes("mixed")) return "Mixed";
+    return null;
+};
+const validateProductionContext = (input: { farmId: string; houseId: string; batchId: string; category?: ProductionCategory; date: string; allowHistorical?: boolean }) => {
+    const userId = currentFarmerId();
+    if (!userId) throw new Error("Sign in as a farmer before recording production.");
+    const farm = getFarmerFarms().find((record) => record.id === input.farmId && record.userId === userId);
+    if (!farm) throw new Error("Choose a farm that belongs to your account.");
+    const house = getPoultryHouses().find((record) => record.id === input.houseId && record.farmId === farm.id && record.userId === userId && !record.archived && record.status !== "Archived" && record.status !== "Closed");
+    if (!house) throw new Error("Choose an active house on the selected farm.");
+    const flock = getFlockRecords().find((record) => record.id === input.batchId && record.farmId === farm.id && record.houseId === house.id && record.userId === userId);
+    if (!flock) throw new Error("Choose a bird batch assigned to this house.");
+    if (input.category && productionCategoryForFlock(flock) !== "Mixed" && productionCategoryForFlock(flock) !== input.category) throw new Error(`This ${productionCategoryForFlock(flock) || "bird"} batch cannot receive a ${input.category.toLowerCase()} record.`);
+    const closure = getFlockClosures(flock.id).sort((a, b) => a.date.localeCompare(b.date))[0];
+    const batchClosed = flock.status === "Closed" || flock.status === "Completed" || flock.status === "Archived";
+    if (batchClosed && (!input.allowHistorical || (closure && input.date > closure.date))) throw new Error("This batch is closed. Choose an active batch or explicitly record a date before its closure.");
+    if (!productionRecordDateIsValid(input.date)) throw new Error("Choose a valid date no later than today.");
+    return { userId, farm, house, flock };
+};
+
+const getProductionEggsRaw = () => readModule2Collection<EggCollectionRecord[]>(PRODUCTION_COLLECTIONS.eggs[0], PRODUCTION_COLLECTIONS.eggs[1], []);
+const getProductionWeightsRaw = () => readModule2Collection<WeightRecord[]>(PRODUCTION_COLLECTIONS.weights[0], PRODUCTION_COLLECTIONS.weights[1], []);
+const getProductionFeedRaw = () => readModule2Collection<ProductionFeedConsumptionRecord[]>(PRODUCTION_COLLECTIONS.feed[0], PRODUCTION_COLLECTIONS.feed[1], []);
+const productionRecordMatches = (record: ProductionRecordBase, filters: ProductionFilters = {}) => (!record.archivedAt || filters.includeArchived) && (!filters.farmId || record.farmId === filters.farmId) && (!filters.houseId || record.houseId === filters.houseId) && (!filters.batchId || record.batchId === filters.batchId) && (!filters.category || record.category === filters.category) && (!filters.fromDate || record.date >= filters.fromDate) && (!filters.toDate || record.date <= filters.toDate);
+export const getEggCollectionRecords = (filters: ProductionFilters = {}) => getProductionEggsRaw().filter((record) => productionRecordMatches(record, filters)).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+export const getWeightRecords = (filters: ProductionFilters = {}) => getProductionWeightsRaw().filter((record) => productionRecordMatches(record, filters)).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+export const getProductionFeedConsumptionRecords = (filters: ProductionFilters = {}) => getProductionFeedRaw().filter((record) => productionRecordMatches(record, filters)).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+
+const validateOptionalCount = (value: number | undefined, label: string) => {
+    if (value !== undefined && (!Number.isInteger(value) || value < 0)) throw new Error(`${label} must be a whole number of zero or more.`);
+};
+const assertNoProductionDuplicate = (records: ProductionRecordBase[], input: { batchId: string; date: string }, excludeId?: string) => {
+    if (records.some((record) => record.id !== excludeId && record.batchId === input.batchId && record.date === input.date && !record.archivedAt)) throw new Error("A record of this type already exists for this batch and date. Edit it instead of adding a duplicate.");
+};
+export const createEggCollectionRecord = (input: EggCollectionInput) => {
+    const { userId } = validateProductionContext({ ...input, category: "Layer" });
+    if (!Number.isInteger(input.totalEggs) || input.totalEggs < 0) throw new Error("Enter the total eggs collected as a whole number of zero or more.");
+    const classifications = [input.marketableEggs, input.brokenEggs, input.crackedEggs, input.dirtyEggs, input.rejectedEggs];
+    classifications.forEach((value, index) => validateOptionalCount(value, ["Marketable eggs", "Broken eggs", "Cracked eggs", "Dirty eggs", "Rejected eggs"][index]));
+    if (classifications.some((value) => value !== undefined) && classifications.reduce<number>((sum, value) => sum + (value || 0), 0) > input.totalEggs) throw new Error("Egg classifications cannot add up to more than the total collected.");
+    validateOptionalCount(input.liveHensAtCollection, "Live hens");
+    if (input.liveHensAtCollection === 0) throw new Error("Live hens must be greater than zero when provided.");
+    if (input.averageEggWeightGrams !== undefined && (!Number.isFinite(input.averageEggWeightGrams) || input.averageEggWeightGrams <= 0 || input.averageEggWeightGrams > 200)) throw new Error("Enter an average egg weight between 0 and 200 grams.");
+    assertNoProductionDuplicate(getProductionEggsRaw(), input);
+    const now = new Date().toISOString();
+    const { allowHistorical: _allowHistorical, category: _category, ...values } = input;
+    const created: EggCollectionRecord = { ...values, category: "Layer", userId, createdBy: userId, id: idFor("egg-collection"), createdAt: now, updatedAt: now };
+    const rows = getProductionEggsRaw();
+    commitModule2Collections([[PRODUCTION_COLLECTIONS.eggs[0], PRODUCTION_COLLECTIONS.eggs[1], [...rows, created]]], `Egg collection recorded for ${getFlockRecords().find((flock) => flock.id === created.batchId)?.name || "bird batch"}`);
+    return created;
+};
+
+export const updateEggCollectionRecord = (id: string, patch: Pick<EggCollectionRecord, "date" | "totalEggs" | "marketableEggs" | "brokenEggs" | "crackedEggs" | "dirtyEggs" | "rejectedEggs" | "liveHensAtCollection" | "averageEggWeightGrams" | "measurementStatus" | "notes">) => {
+    const current = getProductionEggsRaw().find((record) => record.id === id && record.userId === currentFarmerId() && !record.archivedAt);
+    if (!current) throw new Error("Egg collection record not found.");
+    validateProductionContext({ ...current, ...patch, allowHistorical: true });
+    const updated = createEggCollectionRecordReplacement(current, patch);
+    return updated;
+};
+const createEggCollectionRecordReplacement = (current: EggCollectionRecord, patch: Partial<EggCollectionRecord>) => {
+    const rows = getProductionEggsRaw();
+    const next = { ...current, ...patch, updatedAt: new Date().toISOString() };
+    const classifications = [next.marketableEggs, next.brokenEggs, next.crackedEggs, next.dirtyEggs, next.rejectedEggs];
+    if (!Number.isInteger(next.totalEggs) || next.totalEggs < 0 || classifications.some((value) => value !== undefined && (!Number.isInteger(value) || value < 0)) || classifications.reduce<number>((sum, value) => sum + (value || 0), 0) > next.totalEggs) throw new Error("Check the total and egg classifications.");
+    if (next.liveHensAtCollection !== undefined && (!Number.isInteger(next.liveHensAtCollection) || next.liveHensAtCollection < 1)) throw new Error("Live hens must be a whole number greater than zero.");
+    if (next.averageEggWeightGrams !== undefined && (!Number.isFinite(next.averageEggWeightGrams) || next.averageEggWeightGrams <= 0 || next.averageEggWeightGrams > 200)) throw new Error("Enter an average egg weight between 0 and 200 grams.");
+    assertNoProductionDuplicate(rows, next, current.id);
+    commitModule2Collections([[PRODUCTION_COLLECTIONS.eggs[0], PRODUCTION_COLLECTIONS.eggs[1], rows.map((record) => record.id === current.id ? next : record)]], "Egg collection updated");
+    return next;
+};
+
+const toKilograms = (quantity: number, unit: "kg" | "g" | "bags", bagWeightKg?: number) => unit === "kg" ? quantity : unit === "g" ? quantity / 1000 : quantity * (bagWeightKg || 0);
+export const createWeightRecord = (input: WeightRecordInput) => {
+    const { userId } = validateProductionContext({ ...input, category: "Broiler" });
+    const unit = input.weightUnit || "kg";
+    const conversion = unit === "g" ? 1 / 1000 : 1;
+    const individual = input.individualWeights?.map((weight) => weight * conversion);
+    let sampleSize = input.sampleSize;
+    let averageWeightKg = input.averageWeightKg;
+    let totalSampleWeightKg = input.totalSampleWeightKg;
+    if (input.method === "Individual birds") {
+        if (!individual?.length || individual.some((weight) => !Number.isFinite(weight) || weight <= 0)) throw new Error("Enter a valid weight for each bird in the sample.");
+        sampleSize = individual.length;
+        totalSampleWeightKg = individual.reduce((sum, weight) => sum + weight, 0);
+        averageWeightKg = totalSampleWeightKg / sampleSize;
+    } else if (input.method === "Group total") {
+        if (!Number.isFinite(input.totalSampleWeight) || (input.totalSampleWeight || 0) <= 0 || !Number.isInteger(sampleSize) || sampleSize <= 0) throw new Error("Enter the total sample weight and the number of birds weighed.");
+        totalSampleWeightKg = (input.totalSampleWeight || 0) * conversion;
+        averageWeightKg = totalSampleWeightKg / sampleSize;
+    } else {
+        if (!Number.isFinite(averageWeightKg) || (averageWeightKg || 0) <= 0 || !Number.isInteger(sampleSize) || sampleSize <= 0) throw new Error("Enter the average weight and the number of birds weighed.");
+        averageWeightKg = Number(averageWeightKg) * conversion;
+        totalSampleWeightKg = averageWeightKg * sampleSize;
+    }
+    const flock = getFlockRecords().find((record) => record.id === input.batchId)!;
+    const population = getProductionPopulationAtDate(flock.id!, input.date);
+    if (sampleSize > (population ?? flock.birds)) throw new Error("The sample size cannot be greater than the recorded live bird count.");
+    assertNoProductionDuplicate(getProductionWeightsRaw(), input);
+    const now = new Date().toISOString();
+    const { individualWeights: _individualWeights, totalSampleWeight: _totalSampleWeight, weightUnit: _weightUnit, allowHistorical: _allowHistorical, averageWeightKg: _averageWeightKg, totalSampleWeightKg: _totalSampleWeightKg, ...base } = input;
+    const created: WeightRecord = { ...base, category: "Broiler", sampleSize, averageWeightKg, totalSampleWeightKg, individualWeightsKg: individual, userId, createdBy: userId, id: idFor("weight-record"), createdAt: now, updatedAt: now };
+    const rows = getProductionWeightsRaw();
+    commitModule2Collections([[PRODUCTION_COLLECTIONS.weights[0], PRODUCTION_COLLECTIONS.weights[1], [...rows, created]]], "Bird weight recorded");
+    return created;
+};
+export const updateWeightRecord = (id: string, patch: WeightRecordEditInput) => {
+    const rows = getProductionWeightsRaw();
+    const current = rows.find((record) => record.id === id && record.userId === currentFarmerId() && !record.archivedAt);
+    if (!current) throw new Error("Weight record not found.");
+    validateProductionContext({ ...current, ...patch, allowHistorical: true });
+    assertNoProductionDuplicate(rows, { batchId: current.batchId, date: patch.date }, id);
+    const conversion = patch.weightUnit === "g" ? 1 / 1000 : 1;
+    const individualWeightsKg = patch.method === "Individual birds" ? patch.individualWeights?.map((weight) => weight * conversion) : undefined;
+    const sampleSize = patch.method === "Individual birds" ? individualWeightsKg?.length || 0 : patch.sampleSize;
+    let averageWeightKg: number;
+    let totalSampleWeightKg: number;
+    if (patch.method === "Individual birds") {
+        if (!individualWeightsKg?.length || individualWeightsKg.some((weight) => !Number.isFinite(weight) || weight <= 0)) throw new Error("Enter a valid weight for each bird in the sample.");
+        totalSampleWeightKg = individualWeightsKg.reduce((sum, weight) => sum + weight, 0);
+        averageWeightKg = totalSampleWeightKg / sampleSize;
+    } else if (patch.method === "Group total") {
+        if (!Number.isFinite(patch.totalSampleWeight) || (patch.totalSampleWeight || 0) <= 0 || !Number.isInteger(sampleSize) || sampleSize <= 0) throw new Error("Enter the total sample weight and number of birds weighed.");
+        totalSampleWeightKg = (patch.totalSampleWeight || 0) * conversion;
+        averageWeightKg = totalSampleWeightKg / sampleSize;
+    } else {
+        if (!Number.isFinite(patch.averageWeightKg) || (patch.averageWeightKg || 0) <= 0 || !Number.isInteger(sampleSize) || sampleSize <= 0) throw new Error("Enter the average weight and number of birds weighed.");
+        averageWeightKg = (patch.averageWeightKg || 0) * conversion;
+        totalSampleWeightKg = averageWeightKg * sampleSize;
+    }
+    const population = getProductionPopulationAtDate(current.batchId, patch.date);
+    const flock = getFlockRecords().find((record) => record.id === current.batchId);
+    if (!flock || sampleSize > (population ?? flock.birds)) throw new Error("The sample size cannot be greater than the recorded live bird count.");
+    const updated = { ...current, date: patch.date, measurementStatus: patch.measurementStatus, notes: patch.notes, method: patch.method, sampleSize, averageWeightKg, totalSampleWeightKg, individualWeightsKg, updatedAt: new Date().toISOString() };
+    commitModule2Collections([[PRODUCTION_COLLECTIONS.weights[0], PRODUCTION_COLLECTIONS.weights[1], rows.map((record) => record.id === id ? updated : record)]], "Weight record updated");
+    return updated;
+};
+
+const quantityInInventoryUnit = (quantity: number, unit: "kg" | "g" | "bags", itemUnit: string, bagWeightKg?: number) => {
+    const normalized = itemUnit.trim().toLowerCase();
+    const kg = toKilograms(quantity, unit, bagWeightKg);
+    if (["kg", "kgs", "kilogram", "kilograms"].includes(normalized)) return kg;
+    if (["g", "gram", "grams"].includes(normalized)) return kg * 1000;
+    if (["bag", "bags", "sack", "sacks"].includes(normalized)) {
+        if (unit === "bags") return quantity;
+        if (!bagWeightKg) throw new Error("Enter this feed bag's weight before recording it against bag stock.");
+        return kg / bagWeightKg;
+    }
+    if (unit === "bags") throw new Error("Feed stock uses a different unit. Choose a matching unit or record consumption manually.");
+    return unit === "g" && ["piece", "pieces", "unit", "units"].includes(normalized) ? quantity : kg;
+};
+export const createProductionFeedConsumptionRecord = (input: ProductionFeedInput) => {
+    const { userId } = validateProductionContext(input);
+    if (!input.feedType.trim() || !Number.isFinite(input.quantity) || input.quantity <= 0) throw new Error("Enter a feed type and quantity greater than zero.");
+    if (input.unit === "bags" && (!Number.isFinite(input.bagWeightKg) || (input.bagWeightKg || 0) <= 0)) throw new Error("Enter the weight of each feed bag before using bags as the unit.");
+    if (input.recordedCost !== undefined && (!Number.isFinite(input.recordedCost) || input.recordedCost < 0)) throw new Error("Enter a valid recorded feed cost.");
+    if (input.source === "Inventory issue" && !input.inventoryItemId) throw new Error("Select a feed item from this farm's inventory.");
+    const now = new Date().toISOString();
+    const id = idFor("production-feed");
+    const quantityKg = toKilograms(input.quantity, input.unit, input.bagWeightKg);
+    const { allowHistorical: _allowHistorical, ...values } = input;
+    const created: ProductionFeedConsumptionRecord = { ...values, measurementStatus: input.measurementStatus || "Actual", quantityEntered: input.quantity, unitEntered: input.unit, quantityKg, userId, createdBy: userId, category: productionCategoryForFlock(getFlockRecords().find((flock) => flock.id === input.batchId)!) || "Mixed", id, createdAt: now, updatedAt: now };
+    if (input.source === "Manual record") {
+        const records = getProductionFeedRaw();
+        commitModule2Collections([[PRODUCTION_COLLECTIONS.feed[0], PRODUCTION_COLLECTIONS.feed[1], [...records, created]]], `Manual feed use recorded for ${getFlockRecords().find((flock) => flock.id === input.batchId)?.name || "bird batch"}`);
+        return created;
+    }
+    const item = getInventoryItems().find((record) => record.id === input.inventoryItemId && record.farmId === input.farmId && record.userId === userId && (record.feedType || record.category.toLowerCase().includes("feed")));
+    if (!item) throw new Error("Choose a feed inventory item that belongs to this farm.");
+    const issuedQuantity = quantityInInventoryUnit(input.quantity, input.unit, item.unit, input.bagWeightKg);
+    if (!Number.isFinite(issuedQuantity) || issuedQuantity <= 0 || issuedQuantity > item.currentQuantity) throw new Error(`Only ${item.currentQuantity} ${item.unit} are currently available in this feed item.`);
+    const transaction: InventoryTransactionRecord = { id: idFor("inventory-transaction"), userId, farmId: input.farmId, itemId: item.id, type: "Stock issued", quantity: issuedQuantity, unit: item.unit, date: input.date, reason: "Feed issued to production batch", flockId: input.batchId, notes: input.notes, referenceId: `production-feed:${id}`, feedType: input.feedType.trim(), brand: item.brand, bagWeightKg: input.bagWeightKg, createdAt: now };
+    created.inventoryTransactionId = transaction.id;
+    created.inventoryItemId = item.id;
+    const transactions = getInventoryTransactions();
+    const records = getProductionFeedRaw();
+    commitModule2Collections([["inventory-transactions", "jari-simulated-inventory-transactions", [...transactions, transaction]], [PRODUCTION_COLLECTIONS.feed[0], PRODUCTION_COLLECTIONS.feed[1], [...records, created]]], `Feed issued to ${getFlockRecords().find((flock) => flock.id === input.batchId)?.name || "bird batch"}; stock updated once`);
+    return created;
+};
+
+export const updateProductionFeedConsumptionRecord = (id: string, input: ProductionFeedEditInput) => {
+    const userId = currentFarmerId();
+    const rows = getProductionFeedRaw();
+    const current = rows.find((record) => record.id === id && record.userId === userId && !record.archivedAt);
+    if (!userId || !current) throw new Error("Feed consumption record not found.");
+    validateProductionContext({ ...current, ...input, farmId: current.farmId, houseId: current.houseId, batchId: current.batchId, category: current.category, allowHistorical: true });
+    if (!input.feedType.trim() || !Number.isFinite(input.quantity) || input.quantity <= 0) throw new Error("Enter a feed type and quantity greater than zero.");
+    if (input.unit === "bags" && (!Number.isFinite(input.bagWeightKg) || (input.bagWeightKg || 0) <= 0)) throw new Error("Enter the weight of each feed bag before using bags as the unit.");
+    if (input.recordedCost !== undefined && (!Number.isFinite(input.recordedCost) || input.recordedCost < 0)) throw new Error("Enter a valid recorded feed cost.");
+    if (input.source === "Inventory issue" && !input.inventoryItemId) throw new Error("Select a feed item from this farm's inventory.");
+
+    const now = new Date().toISOString();
+    const transactionRows = getInventoryTransactions();
+    const oldIssue = current.inventoryTransactionId ? transactionRows.find((transaction) => transaction.id === current.inventoryTransactionId && transaction.referenceId?.startsWith(`production-feed:${current.id}`)) : undefined;
+    const addedTransactions: InventoryTransactionRecord[] = [];
+    let inventoryTransactionId: string | undefined;
+    let inventoryItemId: string | undefined;
+    if (oldIssue) {
+        addedTransactions.push({ id: idFor("inventory-transaction"), userId, farmId: oldIssue.farmId, itemId: oldIssue.itemId, type: "Adjustment", adjustmentDirection: "Increase", quantity: oldIssue.quantity, unit: oldIssue.unit, date: now.slice(0, 10), reason: "Reversal for corrected production feed issue", flockId: current.batchId, referenceId: `production-feed-edit-reversal:${current.id}:${now}`, createdAt: now });
+    }
+
+    if (input.source === "Inventory issue") {
+        const item = getInventoryItems().find((record) => record.id === input.inventoryItemId && record.farmId === current.farmId && record.userId === userId && (record.feedType || record.category.toLowerCase().includes("feed")));
+        if (!item) throw new Error("Choose a feed inventory item that belongs to this farm.");
+        const quantity = quantityInInventoryUnit(input.quantity, input.unit, item.unit, input.bagWeightKg);
+        const available = item.currentQuantity + (oldIssue?.itemId === item.id ? oldIssue.quantity : 0);
+        if (!Number.isFinite(quantity) || quantity <= 0 || quantity > available) throw new Error(`Only ${available} ${item.unit} will be available after this correction.`);
+        const transaction: InventoryTransactionRecord = { id: idFor("inventory-transaction"), userId, farmId: current.farmId, itemId: item.id, type: "Stock issued", quantity, unit: item.unit, date: input.date, reason: "Feed issue to production batch (corrected record)", flockId: current.batchId, notes: input.notes, referenceId: `production-feed:${current.id}:edit:${now}`, feedType: input.feedType.trim(), brand: item.brand, bagWeightKg: input.bagWeightKg, createdAt: now };
+        addedTransactions.push(transaction);
+        inventoryTransactionId = transaction.id;
+        inventoryItemId = item.id;
+    }
+
+    const updated: ProductionFeedConsumptionRecord = { ...current, date: input.date, feedType: input.feedType.trim(), quantityEntered: input.quantity, unitEntered: input.unit, quantityKg: toKilograms(input.quantity, input.unit, input.bagWeightKg), bagWeightKg: input.bagWeightKg, source: input.source, inventoryItemId, inventoryTransactionId, recordedCost: input.recordedCost, measurementStatus: input.measurementStatus || current.measurementStatus, notes: input.notes, updatedAt: now };
+    const writes: Array<[string, string, unknown]> = [[PRODUCTION_COLLECTIONS.feed[0], PRODUCTION_COLLECTIONS.feed[1], rows.map((record) => record.id === id ? updated : record)]];
+    if (addedTransactions.length) writes.push(["inventory-transactions", "jari-simulated-inventory-transactions", [...transactionRows, ...addedTransactions]]);
+    commitModule2Collections(writes, "Feed record corrected; linked stock was reconciled once");
+    return updated;
+};
+
+export const saveProductionTarget = (input: Omit<ProductionTargetRecord, "id" | "userId" | "source" | "updatedAt">) => {
+    const userId = currentFarmerId();
+    if (!userId) throw new Error("Sign in as a farmer to save production targets.");
+    if ((input.expectedStartOfLay && (input.targetWeightKg !== undefined || input.targetAgeDays !== undefined)) || (input.expectedStartOfLay && !isCalendarDate(input.expectedStartOfLay))) throw new Error("Layer start-of-lay dates must be valid dates and cannot be combined with broiler weight/age targets.");
+    const context = validateProductionContext({ ...input, category: input.expectedStartOfLay ? "Layer" : input.targetWeightKg !== undefined || input.targetAgeDays !== undefined ? "Broiler" : undefined, date: new Date().toISOString().slice(0, 10) });
+    if (input.targetWeightKg !== undefined && (!Number.isFinite(input.targetWeightKg) || input.targetWeightKg <= 0)) throw new Error("Target weight must be greater than zero.");
+    if (input.targetAgeDays !== undefined && (!Number.isInteger(input.targetAgeDays) || input.targetAgeDays <= 0)) throw new Error("Expected production age must be a whole number greater than zero.");
+    if (input.expectedStartOfLay && !isCalendarDate(input.expectedStartOfLay)) throw new Error("Choose a valid expected start-of-lay date or leave it blank.");
+    const records = readModule2Collection<ProductionTargetRecord[]>(PRODUCTION_COLLECTIONS.targets[0], PRODUCTION_COLLECTIONS.targets[1], []);
+    const existing = records.find((record) => record.batchId === input.batchId && record.userId === userId);
+    const target: ProductionTargetRecord = { ...input, userId, farmId: context.farm.id, houseId: input.houseId, id: existing?.id || idFor("production-target"), source: "Farmer entered", updatedAt: new Date().toISOString() };
+    commitModule2Collections([[PRODUCTION_COLLECTIONS.targets[0], PRODUCTION_COLLECTIONS.targets[1], [...records.filter((record) => record.batchId !== input.batchId), target]]], "Production target saved");
+    return target;
+};
+export const getProductionTargets = (batchId?: string) => {
+    const userId = currentFarmerId();
+    if (!userId) return [];
+    return readModule2Collection<ProductionTargetRecord[]>(PRODUCTION_COLLECTIONS.targets[0], PRODUCTION_COLLECTIONS.targets[1], []).filter((record) => record.userId === userId && (!batchId || record.batchId === batchId));
+};
+
+export const archiveProductionRecord = (kind: ProductionRecordKind, id: string) => {
+    const now = new Date().toISOString();
+    if (kind === "Egg collection") {
+        const rows = getProductionEggsRaw();
+        const record = rows.find((row) => row.id === id && row.userId === currentFarmerId() && !row.archivedAt);
+        if (!record) throw new Error("Production record not found.");
+        commitModule2Collections([[PRODUCTION_COLLECTIONS.eggs[0], PRODUCTION_COLLECTIONS.eggs[1], rows.map((row) => row.id === id ? { ...row, archivedAt: now, updatedAt: now } : row)]], "Egg collection archived");
+        return;
+    }
+    if (kind === "Weight measurement") {
+        const rows = getProductionWeightsRaw();
+        const record = rows.find((row) => row.id === id && row.userId === currentFarmerId() && !row.archivedAt);
+        if (!record) throw new Error("Production record not found.");
+        commitModule2Collections([[PRODUCTION_COLLECTIONS.weights[0], PRODUCTION_COLLECTIONS.weights[1], rows.map((row) => row.id === id ? { ...row, archivedAt: now, updatedAt: now } : row)]], "Weight record archived");
+        return;
+    }
+    const rows = getProductionFeedRaw();
+    const record = rows.find((row) => row.id === id && row.userId === currentFarmerId() && !row.archivedAt);
+    if (!record) throw new Error("Production record not found.");
+    const writes: Array<[string, string, unknown]> = [[PRODUCTION_COLLECTIONS.feed[0], PRODUCTION_COLLECTIONS.feed[1], rows.map((row) => row.id === id ? { ...row, archivedAt: now, updatedAt: now } : row)]];
+    if (record.inventoryTransactionId) {
+        const transaction = getInventoryTransactions().find((row) => row.id === record.inventoryTransactionId && row.referenceId?.startsWith(`production-feed:${record.id}`));
+        if (transaction) {
+            const reversal: InventoryTransactionRecord = { id: idFor("inventory-transaction"), userId: record.userId, farmId: transaction.farmId, itemId: transaction.itemId, type: "Adjustment", adjustmentDirection: "Increase", quantity: transaction.quantity, unit: transaction.unit, date: now.slice(0, 10), reason: "Reversal for archived production feed issue", flockId: record.batchId, referenceId: `production-feed-archive:${record.id}`, createdAt: now };
+            writes.push(["inventory-transactions", "jari-simulated-inventory-transactions", [...getInventoryTransactions(), reversal]]);
+        }
+    }
+    commitModule2Collections(writes, record.inventoryTransactionId ? "Feed record archived and stock issue reversed" : "Manual feed record archived");
+};
+
+export const getProductionHistory = (filters: ProductionFilters = {}): ProductionHistoryEntry[] => {
+    const flockNames = new Map(getFlockRecords().map((flock) => [flock.id!, flock.name]));
+    const eggs = getEggCollectionRecords(filters).map((record): ProductionHistoryEntry => ({ id: record.id, kind: "Egg collection", category: "Layer", farmId: record.farmId, houseId: record.houseId, batchId: record.batchId, date: record.date, summary: `${record.totalEggs.toLocaleString()} eggs collected · ${flockNames.get(record.batchId) || "bird batch"}`, measurementStatus: record.measurementStatus, notes: record.notes, createdAt: record.createdAt, archivedAt: record.archivedAt }));
+    const weights = getWeightRecords(filters).map((record): ProductionHistoryEntry => ({ id: record.id, kind: "Weight measurement", category: "Broiler", farmId: record.farmId, houseId: record.houseId, batchId: record.batchId, date: record.date, summary: `${record.averageWeightKg.toFixed(3)} kg average · ${record.sampleSize} birds sampled · ${flockNames.get(record.batchId) || "bird batch"}`, measurementStatus: record.measurementStatus, notes: record.notes, createdAt: record.createdAt, archivedAt: record.archivedAt }));
+    const feed = getProductionFeedConsumptionRecords(filters).map((record): ProductionHistoryEntry => ({ id: record.id, kind: "Feed consumption", category: record.category, farmId: record.farmId, houseId: record.houseId, batchId: record.batchId, date: record.date, summary: `${record.quantityKg.toFixed(2)} kg ${record.feedType} · ${record.source}${record.source === "Inventory issue" ? " · stock updated" : ""} · ${flockNames.get(record.batchId) || "bird batch"}`, measurementStatus: record.measurementStatus, notes: record.notes, createdAt: record.createdAt, archivedAt: record.archivedAt }));
+    return [...eggs, ...weights, ...feed].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+};
+
+const getProductionPopulationAtDate = (batchId: string, date: string): number | null => {
+    const flock = getFlockRecords().find((record) => record.id === batchId);
+    if (!flock) return null;
+    const movements = getFlockMovements().filter((record) => record.flockId === batchId && record.date <= date).sort((a, b) => a.date.localeCompare(b.date) || (a.createdAt || "").localeCompare(b.createdAt || ""));
+    if (!movements.length) return null;
+    const reversed = new Set(movements.flatMap((movement) => movement.reversesMovementId ? [movement.reversesMovementId] : []));
+    let population = 0;
+    let hasStartingPoint = false;
+    for (const movement of movements) {
+        if (movement.type === "Closure") continue;
+        if (movement.type === "Mortality" && reversed.has(movement.id)) continue;
+        let delta = 0;
+        if (["Initial stocking", "Bird acquisition", "Additional stocking", "Transfer in"].includes(movement.type)) { delta = movement.quantity; hasStartingPoint = true; }
+        else if (["Mortality", "Culling", "Sale", "Transfer out"].includes(movement.type)) delta = -movement.quantity;
+        else if (movement.type === "Adjustment") delta = movement.adjustmentDirection === "Decrease" ? -movement.quantity : movement.adjustmentDirection === "Increase" ? movement.quantity : 0;
+        population += delta;
+    }
+    return hasStartingPoint ? Math.max(0, population) : null;
+};
+
+export const getEggProductionSummary = (filters: ProductionFilters = {}) => {
+    const records = getEggCollectionRecords(filters);
+    return { totalEggs: records.reduce((sum, record) => sum + record.totalEggs, 0), classifiedEggs: records.filter((record) => [record.marketableEggs, record.brokenEggs, record.crackedEggs, record.dirtyEggs, record.rejectedEggs].some((value) => value !== undefined)).reduce((sum, record) => sum + (record.marketableEggs || 0) + (record.brokenEggs || 0) + (record.crackedEggs || 0) + (record.dirtyEggs || 0) + (record.rejectedEggs || 0), 0), records: records.length, daily: Object.values(records.reduce<Record<string, number>>((groups, record) => { groups[record.date] = (groups[record.date] || 0) + record.totalEggs; return groups; }, {})).sort((a, b) => a - b), byDate: Object.entries(records.reduce<Record<string, number>>((groups, record) => { groups[record.date] = (groups[record.date] || 0) + record.totalEggs; return groups; }, {})).map(([date, eggs]) => ({ date, eggs })).sort((a, b) => a.date.localeCompare(b.date)) };
+};
+export const getWeightHistory = (filters: ProductionFilters = {}) => getWeightRecords(filters).slice().reverse().map((record, index, rows) => {
+    const previous = rows[index - 1];
+    const days = previous ? Math.round((Date.parse(`${record.date}T00:00:00Z`) - Date.parse(`${previous.date}T00:00:00Z`)) / 86400000) : 0;
+    const gain = previous && days > 0 ? record.averageWeightKg - previous.averageWeightKg : null;
+    return { ...record, previousAverageWeightKg: previous?.averageWeightKg ?? null, weightGainKg: gain, averageDailyGainGrams: gain === null ? null : gain * 1000 / days, daysBetween: days || null };
+});
+export const calculateWeightGain = (batchId: string, fromDate?: string, toDate?: string) => {
+    const rows = getWeightRecords({ batchId, fromDate, toDate }).slice().sort((a, b) => a.date.localeCompare(b.date));
+    if (rows.length < 2) return { value: null, averageDailyGrams: null, days: null, explanation: "Record at least two valid weight measurements for this batch." };
+    const first = rows[0]; const last = rows[rows.length - 1];
+    const days = Math.round((Date.parse(`${last.date}T00:00:00Z`) - Date.parse(`${first.date}T00:00:00Z`)) / 86400000);
+    if (days <= 0) return { value: null, averageDailyGrams: null, days: null, explanation: "Weight measurements need different dates to show growth over time." };
+    const gain = last.averageWeightKg - first.averageWeightKg;
+    return { value: gain, averageDailyGrams: gain * 1000 / days, days, explanation: `Compared ${first.averageWeightKg.toFixed(3)} kg on ${first.date} with ${last.averageWeightKg.toFixed(3)} kg on ${last.date}; ${last.sampleSize} birds were sampled at the latest measurement.` };
+};
+export const calculateLayingRate = (batchId: string, filters: ProductionFilters = {}) => {
+    const records = getEggCollectionRecords({ ...filters, batchId });
+    if (!records.length) return { value: null, explanation: "Record egg collections to calculate laying rate." };
+    let eggs = 0; let hens = 0; let missing = 0;
+    for (const record of records) {
+        const population = record.liveHensAtCollection || getProductionPopulationAtDate(batchId, record.date);
+        if (!population || population <= 0) { missing++; continue; }
+        eggs += record.totalEggs; hens += population;
+    }
+    if (!hens) return { value: null, explanation: "Live hen population is not available for these dates. Record live hens with egg collection or add dated batch population movements." };
+    const days = records.filter((record) => record.liveHensAtCollection || getProductionPopulationAtDate(batchId, record.date)).length;
+    const value = eggs / hens * 100;
+    return { value, explanation: `${eggs.toLocaleString()} eggs across ${days} recorded day(s) divided by ${hens.toLocaleString()} live-hen-days${missing ? `; ${missing} day(s) omitted because population was missing` : ""}.`, complete: missing === 0 };
+};
+export const calculateEggsPerBird = (batchId: string, filters: ProductionFilters = {}) => {
+    const records = getEggCollectionRecords({ ...filters, batchId });
+    const population = records.reduce((sum, record) => sum + (record.liveHensAtCollection || getProductionPopulationAtDate(batchId, record.date) || 0), 0);
+    const eggs = records.reduce((sum, record) => sum + record.totalEggs, 0);
+    return { value: population ? eggs / population : null, unit: "eggs per live hen-day", explanation: population ? `${eggs.toLocaleString()} eggs divided by ${population.toLocaleString()} recorded live-hen-days.` : "Live hen population is not available for the selected dates." };
+};
+export const calculateFeedPerDozenEggs = (batchId: string, filters: ProductionFilters = {}) => {
+    const eggs = getEggCollectionRecords({ ...filters, batchId }).reduce((sum, row) => sum + row.totalEggs, 0);
+    const feed = getProductionFeedConsumptionRecords({ ...filters, batchId }).reduce((sum, row) => sum + row.quantityKg, 0);
+    return { value: eggs > 0 && feed > 0 ? feed / (eggs / 12) : null, unit: "kg per dozen eggs", explanation: eggs && feed ? `${feed.toFixed(2)} kg of recorded feed issue/consumption divided by ${eggs.toLocaleString()} eggs.` : !eggs ? "Egg collection is missing for this period." : "Feed consumption is missing for this period." };
+};
+export const calculateFeedConversionRatio = (batchId: string, filters: ProductionFilters = {}) => {
+    const weights = getWeightRecords({ ...filters, batchId }).sort((a, b) => a.date.localeCompare(b.date));
+    if (weights.length < 2) return { value: null, unit: "kg feed per kg live-weight gain", explanation: "Record at least two weight measurements and feed issued for the same period." };
+    const first = weights[0]; const last = weights[weights.length - 1];
+    const firstPopulation = getProductionPopulationAtDate(batchId, first.date);
+    const lastPopulation = getProductionPopulationAtDate(batchId, last.date);
+    if (!firstPopulation || !lastPopulation || first.sampleSize !== firstPopulation || last.sampleSize !== lastPopulation) return { value: null, unit: "kg feed per kg live-weight gain", explanation: "Flock-level FCR is unavailable: the saved weights are samples, not measurements of the entire live flock at both dates." };
+    const feed = getProductionFeedConsumptionRecords({ ...filters, batchId }).filter((row) => row.date >= first.date && row.date <= last.date).reduce((sum, row) => sum + row.quantityKg, 0);
+    const gain = last.averageWeightKg * lastPopulation - first.averageWeightKg * firstPopulation;
+    if (!feed || gain <= 0) return { value: null, unit: "kg feed per kg live-weight gain", explanation: !feed ? "Feed issue or consumption records are missing for the weight-measurement period." : "Recorded total flock live weight did not increase over this period." };
+    return { value: feed / gain, unit: "kg feed per kg live-weight gain", explanation: `${feed.toFixed(2)} kg feed divided by ${gain.toFixed(2)} kg recorded whole-flock live-weight gain between ${first.date} and ${last.date}.` };
+};
+export const getBatchPerformance = (batchId: string, filters: ProductionFilters = {}) => {
+    const flock = getFlockRecords().find((record) => record.id === batchId);
+    if (!flock) throw new Error("Bird batch not found.");
+    const category = productionCategoryForFlock(flock);
+    if (category === "Layer") return { category, layingRate: calculateLayingRate(batchId, filters), eggsPerBird: calculateEggsPerBird(batchId, filters), feedPerDozenEggs: calculateFeedPerDozenEggs(batchId, filters), weightGain: null, fcr: null };
+    return { category, layingRate: null, eggsPerBird: null, feedPerDozenEggs: null, weightGain: calculateWeightGain(batchId, filters.fromDate, filters.toDate), fcr: calculateFeedConversionRatio(batchId, filters) };
+};
+export const getHousePerformance = (houseId: string, filters: ProductionFilters = {}) => {
+    const house = getPoultryHouses().find((record) => record.id === houseId);
+    if (!house || (filters.farmId && house.farmId !== filters.farmId)) throw new Error("Choose a house that belongs to the selected farm.");
+    const batches = getFlockRecords().filter((flock) => flock.houseId === houseId && (!filters.category || productionCategoryForFlock(flock) === filters.category));
+    const categories = Array.from(new Set(batches.map((flock) => productionCategoryForFlock(flock)).filter((category): category is ProductionCategory => category !== null)));
+    return categories.map((category) => getFarmPerformance(house.farmId!, { ...filters, houseId, category }));
+};
+export const getFarmPerformance = (farmId: string, filters: ProductionFilters = {}) => {
+    if (!getFarmerFarms().some((farm) => farm.id === farmId && farm.userId === currentFarmerId())) throw new Error("Choose a farm that belongs to your account.");
+    const scoped = { ...filters, farmId };
+    const eggs = getEggCollectionRecords(scoped);
+    const eggTotal = eggs.reduce((sum, record) => sum + record.totalEggs, 0);
+    const henDays = eggs.reduce((sum, record) => sum + (record.liveHensAtCollection || getProductionPopulationAtDate(record.batchId, record.date) || 0), 0);
+    const layer = { category: "Layer" as const, totalEggs: eggTotal, layingRate: henDays ? eggTotal / henDays * 100 : null, liveHenDays: henDays, explanation: henDays ? `Calculated from ${eggTotal.toLocaleString()} eggs and ${henDays.toLocaleString()} recorded live-hen-days.` : "Live hen population is missing for the selected egg records." };
+    const broilerBatches = Array.from(new Set(getWeightRecords({ ...scoped, category: "Broiler" }).map((record) => record.batchId)));
+    const weightRecords = getWeightRecords({ ...scoped, category: "Broiler" });
+    const broiler = { category: "Broiler" as const, averageSampleWeightKg: weightRecords.length ? weightRecords.reduce((sum, record) => sum + record.averageWeightKg, 0) / weightRecords.length : null, weightRecords: weightRecords.length, batches: broilerBatches.length, explanation: "Average sample weight is shown; it is not a whole-flock weight." };
+    const categories = filters.category === "Broiler" ? [broiler] : filters.category === "Layer" ? [layer] : filters.category === "Mixed" ? [] : [layer, broiler];
+    return { farmId, categories };
+};
+export const getProductionSummary = (filters: ProductionFilters = {}) => {
+    const farms = getFarmerFarms();
+    const houses = getPoultryHouses().filter((house) => (!filters.farmId || house.farmId === filters.farmId) && (!filters.houseId || house.id === filters.houseId) && !house.archived && house.status !== "Archived");
+    const flocks = getFlockRecords().filter((flock) => (!filters.farmId || flock.farmId === filters.farmId) && (!filters.houseId || flock.houseId === filters.houseId) && (!filters.batchId || flock.id === filters.batchId) && (!filters.category || productionCategoryForFlock(flock) === filters.category) && flock.status === "Active");
+    const eggs = getEggCollectionRecords(filters);
+    const weights = getWeightRecords(filters);
+    const feed = getProductionFeedConsumptionRecords(filters);
+    const lastDate = filters.toDate || new Date().toISOString().slice(0, 10);
+    const firstDate = filters.fromDate || new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
+    return { farms: farms.filter((farm) => !filters.farmId || farm.id === filters.farmId), activeBatches: flocks.length, activeHouses: houses.filter((house) => flocks.some((flock) => flock.houseId === house.id)).length, liveBirds: flocks.reduce((sum, flock) => sum + flock.birds, 0), eggCollections: eggs.length, eggsCollected: eggs.reduce((sum, record) => sum + record.totalEggs, 0), weightRecords: weights.length, latestAverageWeightKg: weights[0]?.averageWeightKg ?? null, feedRecords: feed.length, feedIssuedKg: feed.reduce((sum, record) => sum + record.quantityKg, 0), periodStart: firstDate, periodEnd: lastDate, latestActivity: getProductionHistory(filters)[0] || null };
+};
+export const generateProductionAlerts = (filters: ProductionFilters = {}): ProductionAlertRecord[] => {
+    const today = new Date().toISOString().slice(0, 10);
+    const output: ProductionAlertRecord[] = [];
+    const active = getFlockRecords().filter((flock) => flock.status === "Active" && (!filters.farmId || flock.farmId === filters.farmId) && (!filters.houseId || flock.houseId === filters.houseId) && (!filters.batchId || flock.id === filters.batchId));
+    for (const flock of active) {
+        const category = productionCategoryForFlock(flock);
+        if (category === "Layer") {
+            const last = getEggCollectionRecords({ batchId: flock.id })[0];
+            if (last && (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${last.date}T00:00:00Z`)) / 86400000 >= 2) output.push({ key: `egg-gap:${flock.id}:${last.date}`, userId: flock.userId || currentFarmerId() || "", farmId: flock.farmId || "", houseId: flock.houseId || "", batchId: flock.id || "", category, severity: "Information", title: "No recent egg collection record", description: `The latest egg collection for ${flock.name} was recorded on ${last.date}. This reports record freshness only; it does not indicate a change in production.`, triggeredAt: today });
+        } else if (category === "Broiler") {
+            const latest = getWeightRecords({ batchId: flock.id })[0];
+            if (latest && (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${latest.date}T00:00:00Z`)) / 86400000 >= 14) output.push({ key: `weight-gap:${flock.id}:${latest.date}`, userId: flock.userId || currentFarmerId() || "", farmId: flock.farmId || "", houseId: flock.houseId || "", batchId: flock.id || "", category, severity: "Information", title: "Weight record is over two weeks old", description: `The latest recorded sample for ${flock.name} was on ${latest.date}. Record a new sample if you want an updated growth comparison.`, triggeredAt: today });
+        }
+    }
+    return output;
+};
+
 export const addProductionRecord = (record: Omit<ProductionRecord, "id">) => {
     const flock = getFlockRecords().find((item) => item.name === record.flock);
     if (!flock) throw new Error("Choose a bird group that exists on your farm.");
@@ -1602,7 +2129,7 @@ export const resetDemoDatabase = () => {
 };
 
 export const importDemoDatabase = (value: unknown) => {
-    if (!value || typeof value !== "object") throw new Error("Choose a valid JARI backup file.");
+    if (!value || typeof value !== "object") throw new Error("Choose a valid Jari backup file.");
     const snapshot = value as Record<string, unknown>;
     if (snapshot.version !== storageSchemaVersion) throw new Error("This backup version is not supported.");
     const schemas: Record<string, Record<string, "string" | "number" | "boolean" | "object">> = {

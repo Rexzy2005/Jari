@@ -2,7 +2,7 @@
 
 ## Current delivery boundary
 
-The frontend has browser-local simulated workflows behind `frontend/src/services/index.ts`; `frontend/src/lib/simulated-data.ts` provides the current persistence adapter. This supports product exploration and local evaluation, not production authentication or shared multi-user data. The FastAPI backend and database are separate and are not in scope for Modules 1 or 2 as currently specified.
+The frontend has browser-local simulated workflows behind `frontend/src/services/index.ts`; `frontend/src/lib/simulated-data.ts` provides the current persistence adapter. This supports product exploration and local evaluation, not production authentication or shared multi-user data. Module 3 is also frontend/mock only; the FastAPI backend and database are not in scope for it.
 
 Keep UI components dependent on service contracts rather than local storage details. A future API adapter should replace simulated persistence without changing product workflows. Do not treat browser-local passwords, sessions, or records as secure production storage.
 
@@ -37,11 +37,13 @@ House capacity, infrastructure and house-level biosecurity belong to a house. Ba
 
 **Module 2 — flock and inventory management:** house management is the operational foundation for flock batches. House, flock and inventory operations use the shared farm/house/batch references; flock and inventory remain independently usable. The current Module 2 plan authorizes house and flock work in Phase 2, inventory in Phase 3, integration and record freshness in Phase 4, and validation/documentation in Phase 5. Module 1 does not absorb these operational workflows. Intelligent record capture remains excluded until separately authorized.
 
+**Module 3 — production and performance management:** production records extend existing batch identities and always retain their farmer, farm, house and batch references. Egg collections, bird-weight measurements, and batch feed consumption are source records; house and farm totals are derived from those batch records. Population denominators come from Module 2's dated flock movement history. Feed stock remains owned by Module 2 inventory: issuing feed creates one stock transaction and one linked production-consumption record, while manual consumption does not alter inventory. Performance indicators are derived on demand, disclose their period, units and completeness, and remain unavailable when their inputs are insufficient. Module 3 uses the same account-scoped simulated persistence adapter and introduces no backend, independent inventory, or separate source-of-truth snapshot.
+
 Later capabilities must reuse the shared identities and relationships above. Module plans define implementation scope; this document defines the shared product architecture and does not authorize backend or later-module work.
 
 ## Existing implementation versus target
 
-The frontend uses a simulated service facade and browser-local storage. Module 2 work is adding account-scoped farm, house, batch, movement, activity, milestone and inventory-ledger relationships while preserving compatibility with existing demo records. Some legacy production, finance and health records still use display names or shared storage and are not yet fully aligned with the target normalized model. See `docs/progress.md` for the current implementation boundary and remaining work. Do not claim existing screens or workflows imply production API integration.
+The frontend uses a simulated service facade and browser-local storage. Module 2 work adds account-scoped farm, house, batch, movement, activity, milestone and inventory-ledger relationships while preserving compatibility with existing demo records. Existing production records are legacy-shaped (display-name based, shared storage, and without stable farm/house/batch references); they must be retained as legacy history but must not be treated as normalized Module 3 measurements unless they can be safely linked to an owned batch. See `docs/progress.md` for the current implementation boundary and remaining work. Do not claim existing screens or workflows imply production API integration.
 
 ## Module 1 logical records
 

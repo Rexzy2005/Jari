@@ -42,7 +42,7 @@ npm run dev
 
 The frontend is available at [http://localhost:3000](http://localhost:3000). The local environment template points the API client at the local backend (`http://localhost:8000/api/v1`). Set `NEXT_PUBLIC_API_URL` in the frontend hosting environment to the deployed backend URL (for Render, `https://<service>.onrender.com/api/v1`). Restart or redeploy the frontend after changing environment variables.
 
-The main demo workflows currently use simulated records in browser `localStorage`. They can run without a local backend; backend API wiring is not yet complete across all screens. Demo records stay in that browser and do not represent production data.
+The main farmer workflows currently use simulated records in browser `localStorage`. Production now supports batch-linked egg collection, bird-weight and feed records, derived performance measures, filtered history, and CSV export through the same simulated service architecture. These records remain local to the browser and are not backend-connected or suitable for production use. Legacy production data without reliable batch ownership is retained separately and excluded from normalized performance summaries. Module 3 scope and limitations are tracked in [progress.md](docs/progress.md).
 
 Useful frontend commands (run from `frontend/`):
 

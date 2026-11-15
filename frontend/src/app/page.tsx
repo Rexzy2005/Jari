@@ -13,10 +13,10 @@ const serviceCards = [
 ];
 
 const questions = [
-  { question: "What is JARI?", answer: "JARI helps poultry farmers organize farm information, understand risk and connect with relevant advisory, finance and insurance pathways." },
+  { question: "What is Jari?", answer: "Jari helps poultry farmers organize farm information, understand risk and connect with relevant advisory, finance and insurance pathways." },
   { question: "What information goes into a farm profile?", answer: "Farm and flock details, vaccination and health records, production information and farm finances. You can build your profile with the information you have and add to it over time." },
-  { question: "Does a JARI profile guarantee a loan or insurance?", answer: "No. A profile helps make farm information clearer for assessment. Finance and insurance decisions are made by the relevant providers and depend on their requirements." },
-  { question: "Where is JARI starting?", answer: "JARI is starting with poultry farmers in Jos South, Plateau State, Nigeria." },
+  { question: "Does a Jari profile guarantee a loan or insurance?", answer: "No. A profile helps make farm information clearer for assessment. Finance and insurance decisions are made by the relevant providers and depend on their requirements." },
+  { question: "Where is Jari starting?", answer: "Jari is starting with poultry farmers in Jos South, Plateau State, Nigeria." },
 ];
 
 export default function HomePage() {
@@ -28,13 +28,13 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="relative mx-auto flex max-w-4xl flex-col items-center text-center">
             <p className="hero-content inline-flex items-center gap-2 rounded-full bg-[#edf1e8] px-3.5 py-2 text-[10px] font-bold uppercase tracking-[.15em] text-[#4b6749] sm:text-xs">
-              <MapPin size={13} /> Welcome to JARI
+              <MapPin size={13} /> Welcome to Jari
             </p>
             <h1 className="hero-content mt-6 max-w-4xl font-serif text-[2.75rem] font-medium leading-[.99] tracking-[-.055em] sm:mt-7 sm:text-6xl lg:text-[5.4rem]">
               Make your farm easier to <span className="relative inline-block text-[#50724c]">understand<span aria-hidden="true" className="hero-underline" /></span>.
             </h1>
             <p className="hero-content mt-5 max-w-2xl text-sm leading-6 text-[#657064] sm:mt-6 sm:text-base sm:leading-7">
-              JARI turns everyday poultry farm records into a clearer picture of risk and a better starting point for the support your farm needs.
+              Jari turns everyday poultry farm records into a clearer picture of risk and a better starting point for the support your farm needs.
             </p>
             <div className="hero-content mt-6 flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
               <Link href="/register" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#244b35] px-6 py-3 text-sm font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-[#193d2b] sm:w-auto">Create your farm profile <ArrowRight size={16} /></Link>
@@ -71,7 +71,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="max-w-lg">
             <ScrollReveal><div>
-              <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">The JARI approach</p>
+              <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">The Jari approach</p>
               <h2 className="mt-3 font-serif text-3xl leading-[1.06] tracking-[-.035em] sm:text-5xl">A farm is more than its flock.</h2>
               <p className="mt-3 max-w-md text-sm leading-6 text-[#697268]">When the everyday details are in one place, the whole operation becomes easier to see.</p>
             </div></ScrollReveal>
@@ -82,7 +82,7 @@ export default function HomePage() {
               <ScrollReveal delay={90}><article className="flex gap-3 py-2 sm:gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#52744e]"><Activity size={18} /></span><div><h3 className="font-serif text-lg font-medium">A clearer risk picture</h3><p className="mt-1 text-xs leading-5 text-[#71786f]">Understand factors that may affect farm operations and finances.</p></div></article></ScrollReveal>
             </div>
             <ScrollReveal className="order-first lg:order-none"><div className="profile-illustration mx-auto w-full max-w-[390px] rotate-[-3deg] rounded-[1.5rem] bg-[#244b35] p-4 text-white shadow-[0_30px_60px_-42px_rgba(29,58,36,.6)] sm:p-6">
-              <div className="flex items-start justify-between"><div><p className="text-[9px] font-bold uppercase tracking-[.17em] text-[#c4d4b8]">JARI farm profile</p><p className="mt-1 font-serif text-xl sm:text-2xl">Your farm, connected.</p></div><span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10"><Sprout size={17} /></span></div>
+              <div className="flex items-start justify-between"><div><p className="text-[9px] font-bold uppercase tracking-[.17em] text-[#c4d4b8]">Jari farm profile</p><p className="mt-1 font-serif text-xl sm:text-2xl">Your farm, connected.</p></div><span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10"><Sprout size={17} /></span></div>
               <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-7 sm:gap-3">{[{ icon: ClipboardList, label: "Farm records" }, { icon: HeartPulse, label: "Bird health" }, { icon: Activity, label: "Production" }, { icon: Landmark, label: "Farm finances" }].map(({ icon: Icon, label }) => <div key={label} className="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-3 text-[10px] font-medium sm:text-xs"><Icon size={15} className="text-[#d6e5c8]" />{label}</div>)}</div>
               <div className="mt-4 flex items-center justify-between rounded-xl bg-[#d7e5ca] px-3 py-3 text-[#2e4931] sm:px-4"><div><p className="text-[8px] font-bold uppercase tracking-[.13em] text-[#5f755a]">Together, they form</p><p className="mt-0.5 font-serif text-base sm:text-lg">A farm risk profile</p></div><ArrowRight size={18} /></div>
             </div></ScrollReveal>
@@ -97,7 +97,7 @@ export default function HomePage() {
       <section id="services" className="scroll-mt-24 px-5 py-14 sm:px-8 sm:py-20">
         <div className="mx-auto max-w-7xl">
           <ScrollReveal className="mx-auto max-w-xl text-center"><div>
-            <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">What JARI brings together</p>
+            <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">What Jari brings together</p>
             <h2 className="mt-3 font-serif text-3xl leading-tight tracking-[-.035em] sm:text-5xl">A stronger picture of your farm.</h2>
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#697268]">Practical information and support, designed around poultry farming.</p>
           </div></ScrollReveal>
@@ -118,7 +118,7 @@ export default function HomePage() {
             <p className="text-[10px] font-bold uppercase tracking-[.17em] text-[#c3d5b6]">From records to support</p>
             <h2 className="mt-3 font-serif text-3xl leading-[1.04] tracking-[-.035em] sm:text-5xl">Make the next conversation count.</h2>
             <p className="mt-4 max-w-md text-sm leading-6 text-[#e0e8dc]/80">A clear farm profile can help farmers and support providers start with the same picture whether the conversation is about advice, insurance or finance.</p>
-            <Link href="/about" className="mt-6 inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-[#eff3e9] px-5 py-2.5 text-xs font-semibold text-[#294430] transition-colors hover:bg-white">Explore JARI <ArrowRight size={14} /></Link>
+            <Link href="/about" className="mt-6 inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-[#eff3e9] px-5 py-2.5 text-xs font-semibold text-[#294430] transition-colors hover:bg-white">Explore Jari <ArrowRight size={14} /></Link>
           </div></ScrollReveal>
           <ScrollReveal delay={120}><div className="relative mx-auto grid w-full max-w-[520px] grid-cols-2 gap-3 sm:gap-4">
             <div className="col-span-2 flex items-center gap-4 rounded-[1.3rem] bg-white/[.09] p-4 sm:p-5"><span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#d9e6cd] text-[#315138]"><ClipboardList size={20} /></span><div><p className="text-[9px] font-bold uppercase tracking-[.13em] text-[#c6d6bb]">Start with</p><p className="mt-1 font-serif text-lg sm:text-xl">Your farm’s information</p></div></div>
@@ -133,7 +133,7 @@ export default function HomePage() {
           <ScrollReveal className="max-w-md"><div>
             <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">Starting locally</p>
             <h2 className="mt-3 font-serif text-3xl leading-[1.05] tracking-[-.035em] sm:text-5xl">Built around real poultry farms.</h2>
-            <p className="mt-4 text-sm leading-6 text-[#697268]">JARI is beginning with poultry farmers in Jos South, Plateau State. The work starts by listening, recording what matters and building a profile one step at a time.</p>
+            <p className="mt-4 text-sm leading-6 text-[#697268]">Jari is beginning with poultry farmers in Jos South, Plateau State. The work starts by listening, recording what matters and building a profile one step at a time.</p>
             <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#edf1e8] px-3.5 py-2 text-xs font-semibold text-[#4c694a]"><MapPin size={14} /> Jos South · Plateau State · Nigeria</div>
           </div></ScrollReveal>
           <div className="grid gap-3 sm:grid-cols-[1.15fr_.85fr] sm:gap-4">
@@ -149,7 +149,7 @@ export default function HomePage() {
 
       <section id="faq" className="scroll-mt-24 bg-[#f1f2f0] px-5 py-14 sm:px-8 sm:py-20">
         <div className="mx-auto max-w-3xl">
-          <ScrollReveal className="text-center"><div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">A few helpful answers</p><h2 className="mt-3 font-serif text-3xl tracking-[-.035em] sm:text-4xl">Questions about JARI</h2></div></ScrollReveal>
+          <ScrollReveal className="text-center"><div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">A few helpful answers</p><h2 className="mt-3 font-serif text-3xl tracking-[-.035em] sm:text-4xl">Questions about Jari</h2></div></ScrollReveal>
           <div className="mt-7 space-y-2.5 sm:mt-9">
             {questions.map(({ question, answer }, index) => <ScrollReveal key={question} delay={index * 65}><details className="faq-item group rounded-[1rem] bg-white px-4 py-4 open:bg-[#e8eddf] sm:px-5 sm:py-5"><summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-[#303a31] marker:hidden [&::-webkit-details-marker]:hidden">{question}<span aria-hidden="true" className="faq-plus flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f0f2ec] text-[#52704d] group-open:rotate-45"><span className="text-lg font-normal leading-none">+</span></span></summary><p className="max-w-2xl pt-3 pr-8 text-xs leading-5 text-[#697268] sm:text-sm sm:leading-6">{answer}</p></details></ScrollReveal>)}
           </div>
@@ -158,7 +158,7 @@ export default function HomePage() {
 
       <section id="contact" className="scroll-mt-24 px-5 py-12 sm:px-8 sm:py-16">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-6 rounded-[1.4rem] bg-[#e9ede5] px-5 py-6 sm:flex-row sm:items-center sm:gap-10 sm:px-8 sm:py-8">
-          <div className="max-w-lg"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">Talk with JARI</p><h2 className="mt-2 font-serif text-2xl leading-tight tracking-[-.025em] sm:text-3xl">A good farm decision can start with a conversation.</h2></div>
+          <div className="max-w-lg"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#5c795d]">Talk with Jari</p><h2 className="mt-2 font-serif text-2xl leading-tight tracking-[-.025em] sm:text-3xl">A good farm decision can start with a conversation.</h2></div>
           <div className="flex flex-col gap-2 sm:min-w-[270px]">
             <a href="mailto:info@jari.com" className="group flex items-center gap-3 rounded-xl bg-white/70 px-3.5 py-3 transition-colors hover:bg-white"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#edf1e8] text-[#52744e]"><Mail size={15} /></span><span><span className="block text-[9px] font-bold uppercase tracking-[.12em] text-[#788174]">Email</span><span className="block text-xs font-semibold text-[#344536] group-hover:text-[#52744e]">info@jari.com</span></span></a>
             <a href="tel:+2348133153568" className="group flex items-center gap-3 rounded-xl bg-white/70 px-3.5 py-3 transition-colors hover:bg-white"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#edf1e8] text-[#52744e]"><Phone size={15} /></span><span><span className="block text-[9px] font-bold uppercase tracking-[.12em] text-[#788174]">Call</span><span className="block text-xs font-semibold text-[#344536] group-hover:text-[#52744e]">0813 315 3568</span></span></a>
@@ -173,7 +173,7 @@ export default function HomePage() {
           <div className="relative mx-auto max-w-3xl">
             <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#d1dfc6]">Your farm, more clearly seen</p>
             <h2 className="mt-3 font-serif text-3xl leading-[1.04] tracking-[-.035em] sm:text-5xl">Better farm information can change what comes next.</h2>
-            <p className="mx-auto mt-4 max-w-xl text-xs leading-5 text-white/75 sm:text-sm sm:leading-6">Start a JARI farm profile with the details you already have. Build a clearer picture over time.</p>
+            <p className="mx-auto mt-4 max-w-xl text-xs leading-5 text-white/75 sm:text-sm sm:leading-6">Start a Jari farm profile with the details you already have. Build a clearer picture over time.</p>
             <Link href="/register" className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#f5f6f0] px-6 py-3 text-xs font-bold text-[#294430] transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white">Get started <ArrowRight size={15} /></Link>
           </div>
         </div></ScrollReveal>

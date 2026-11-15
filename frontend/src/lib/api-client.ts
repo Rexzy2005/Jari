@@ -1,5 +1,5 @@
 /**
- * Centralized Typed API Client for JARI FastAPI Backend
+ * Centralized Typed API Client for Jari FastAPI Backend
  * Handles authentication headers, error normalization, file uploads, and resource methods.
  */
 

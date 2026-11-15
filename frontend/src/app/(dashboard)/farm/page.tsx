@@ -35,7 +35,7 @@ export default function FarmPage() {
   return (
     <div className="space-y-5 sm:space-y-7">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#587354]">Farm information</p><h2 className="mt-1 font-serif text-2xl font-medium tracking-[-.025em] text-[#20291f] sm:text-3xl">Your farm profile</h2><p className="mt-1 text-xs leading-5 text-[#788174] sm:text-sm">Review the details JARI has for your poultry farm.</p></div>
+        <div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#587354]">Farm information</p><h2 className="mt-1 font-serif text-2xl font-medium tracking-[-.025em] text-[#20291f] sm:text-3xl">Your farm profile</h2><p className="mt-1 text-xs leading-5 text-[#788174] sm:text-sm">Review the details Jari has for your poultry farm.</p></div>
         <div className="flex flex-wrap gap-2"><Link href="/assessments" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#e9efe3] px-4 py-2.5 text-xs font-semibold text-[#35543b] transition-colors hover:bg-[#dfe8d9]"><Activity size={14} /> View farm risk profile</Link><Link href="/farm/new" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#244b35] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#193d2b]"><Pencil size={14} /> Edit farm details</Link></div>
       </div>
 

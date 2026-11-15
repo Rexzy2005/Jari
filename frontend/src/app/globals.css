@@ -63,7 +63,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar { display: none; width: 0; height: 0; }
 }
 
-/* JARI's surfaces use tone and spacing instead of outlined containers. */
+/* Jari's surfaces use tone and spacing instead of outlined containers. */
 :where([class~="border"], [class*="border-"]):not(input[type="checkbox"]):not(input[type="radio"]) {
   border-color: transparent !important;
 }

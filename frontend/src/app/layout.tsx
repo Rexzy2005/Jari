@@ -17,8 +17,8 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "JARI | Farm intelligence for poultry farmers",
-  description: "Organize poultry farm records, understand operations and prepare for financial opportunities with JARI.",
+  title: "Jari | Farm intelligence for poultry farmers",
+  description: "Organize poultry farm records, understand operations and prepare for financial opportunities with Jari.",
   icons: {
     icon: { url: "/logo/JARI_navbar_logo.png", type: "image/png" },
     shortcut: { url: "/logo/JARI_navbar_logo.png", type: "image/png" },

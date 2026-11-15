@@ -1,6 +1,6 @@
 /**
  * Backend Sync Service
- * Bridges FastAPI REST endpoints with the local reactive storage used by JARI UI components.
+ * Bridges FastAPI REST endpoints with the local reactive storage used by Jari UI components.
  * When authenticated, fetches real backend data, maps backend schemas to frontend types,
  * executes real backend mutations, and triggers event-based UI re-renders.
  */

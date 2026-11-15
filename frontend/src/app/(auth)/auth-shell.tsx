@@ -19,8 +19,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(203,222,176,.2),transparent_35%)]" />
 
           <div className="relative z-10 flex items-start justify-between gap-4">
-            <Link href="/" aria-label="JARI home" className="rounded-2xl bg-white/10 p-3 backdrop-blur-md"><JariLogo size={29} /></Link>
-            <span className="auth-visual-tag"><span className="auth-visual-tag-dot" />Farm intelligence</span>
+            <Link href="/" aria-label="Jari home" className="rounded-2xl bg-white px-3 py-2"><JariLogo size={29} /></Link>
           </div>
 
           <div className="auth-visual-message relative z-10 mb-1 max-w-xl">
@@ -37,7 +36,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
 
         <section className={`auth-content ${pathname === "/register" ? "auth-content-register" : ""} relative flex min-h-0 min-w-0 flex-col bg-white px-5 py-4 sm:px-10 sm:py-5 lg:px-10 xl:px-[4rem]`}>
           <header className="mb-3 flex shrink-0 items-center justify-between gap-4 sm:mb-4">
-            <Link href="/" aria-label="JARI home" className="lg:hidden"><JariLogo size={24} /></Link>
+            <Link href="/" aria-label="Jari home" className="lg:hidden"><JariLogo size={24} /></Link>
             <span className="hidden items-center gap-2 rounded-full bg-[#f4f6f1] px-3 py-2 text-[10px] font-semibold text-[#62705f] sm:inline-flex lg:ml-auto"><ShieldCheck size={14} className="text-[#547253]" /> Secure account access</span>
             <Link href="/" className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-[#647160] transition hover:text-[#244b35] lg:ml-0">Website <ArrowUpRight size={14} /></Link>
           </header>
@@ -51,7 +50,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <footer className="auth-footer mx-auto mt-5 w-full max-w-[430px] shrink-0 border-t border-[#edf0e9] pt-3 text-center text-[10px] leading-4 text-[#879082] sm:mt-6">
-            <span>JARI farm records are used to build a clearer picture of your operation.</span><span className="mx-2 text-[#c2c9bd]">·</span><a href="mailto:info@jari.com" className="font-semibold text-[#547253] hover:text-[#244a35]">Get help</a>
+            <span>Jari farm records are used to build a clearer picture of your operation.</span><span className="mx-2 text-[#c2c9bd]">·</span><a href="mailto:info@jari.com" className="font-semibold text-[#547253] hover:text-[#244a35]">Get help</a>
           </footer>
         </section>
       </div>

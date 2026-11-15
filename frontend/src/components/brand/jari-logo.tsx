@@ -9,7 +9,7 @@ export function JariLogo({ size = 40 }: JariLogoProps) {
     <span className="inline-flex shrink-0">
       <Image
         src="/logo/JARI_navbar_logo.png"
-        alt="JARI"
+        alt="Jari"
         width={259}
         height={70}
         style={{ width: `${size * 3.7}px`, height: `${size}px` }}

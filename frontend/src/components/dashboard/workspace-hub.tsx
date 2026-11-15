@@ -93,7 +93,7 @@ export function WorkspaceHub({ section, institution = false }: { section: string
   if (institution) {
     return (
       <div className="mx-auto max-w-3xl space-y-5">
-        <Header title="Farm details are protected" intro="The institution workspace shares portfolio statistics. Individual farm profiles and records are available to the farmer and JARI review team." institution />
+        <Header title="Farm details are protected" intro="The institution workspace shares portfolio statistics. Individual farm profiles and records are available to the farmer and Jari review team." institution />
         <section className={`${card} space-y-3 text-sm leading-6 text-[#657064]`}>
           <p>Review portfolio patterns from the <Link className="font-semibold text-[#355a3c] underline" href="/institution">overview statistics</Link>, or <Link className="font-semibold text-[#355a3c] underline" href="/institution/requests">send a request</Link> to ask a farmer for more information.</p>
           <p>Farm names, exact locations, contact details, documents and individual records are not shown in this institution demo.</p>
@@ -344,10 +344,10 @@ function InstitutionApplications({ applications, onReview }: { applications: Opp
     {applications.length ? <section className="grid gap-3 md:grid-cols-2">{applications.map((application) => {
       const check = application.requirementCheck;
       return <article key={application.id} className="rounded-[1.25rem] bg-white p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#799071]">{application.type} · {application.status}</p><h2 className="mt-1 font-serif text-xl font-medium text-[#2f3c30]">{application.farmerName || "Farmer applicant"}</h2><p className="mt-1 text-xs text-[#737d70]">{application.farmName || application.opportunityName}</p></div><div className="rounded-xl bg-[#edf2e8] px-3 py-2 text-center"><strong className="block text-lg leading-5 text-[#35583d]">{application.profileScore ?? "—"}</strong><span className="text-[9px] font-semibold uppercase tracking-wide text-[#71806d]">JARI score</span></div></div>
+        <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#799071]">{application.type} · {application.status}</p><h2 className="mt-1 font-serif text-xl font-medium text-[#2f3c30]">{application.farmerName || "Farmer applicant"}</h2><p className="mt-1 text-xs text-[#737d70]">{application.farmName || application.opportunityName}</p></div><div className="rounded-xl bg-[#edf2e8] px-3 py-2 text-center"><strong className="block text-lg leading-5 text-[#35583d]">{application.profileScore ?? "—"}</strong><span className="text-[9px] font-semibold uppercase tracking-wide text-[#71806d]">Jari score</span></div></div>
         <div className="mt-4 grid grid-cols-3 gap-2">{[["Birds", application.birdCount?.toLocaleString() ?? "—"], ["Houses", application.houseCount ?? "—"], ["Checklist", check ? `${check.readiness}%` : "Not checked"]].map(([label, value]) => <div key={label} className="rounded-lg bg-[#f7f8f4] px-3 py-2"><p className="text-[9px] text-[#84907e]">{label}</p><p className="mt-0.5 text-xs font-semibold text-[#354237]">{value}</p></div>)}</div>
         <div className="mt-4 rounded-xl bg-[#f7f8f4] p-4"><div className="flex items-center justify-between gap-2"><h3 className="text-xs font-semibold text-[#344236]">Record requirements</h3><span className="text-[10px] text-[#788174]">{check?.met.length ?? 0} present · {check?.missing.length ?? 0} missing</span></div><div className="mt-2 space-y-1.5">{check?.missing.length ? check.missing.map((item) => <p key={item} className="text-xs leading-5 text-[#8b6e37]">Still needed: {item}</p>) : <p className="text-xs leading-5 text-[#55734f]">All listed record checks are present.</p>}</div></div>
-        <p className="mt-3 text-[10px] leading-4 text-[#899184]">The JARI profile score and record check support review; they do not decide eligibility or guarantee approval.</p>
+        <p className="mt-3 text-[10px] leading-4 text-[#899184]">The Jari profile score and record check support review; they do not decide eligibility or guarantee approval.</p>
         {!(["Reviewed", "Needs information"].includes(application.status)) && <div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={() => onReview(application, "Reviewed")} className="min-h-10 rounded-full bg-[#244b35] px-4 text-xs font-semibold text-white">Mark reviewed</button><button type="button" onClick={() => onReview(application, "Needs information")} className="min-h-10 rounded-full bg-[#edf2e8] px-4 text-xs font-semibold text-[#35543b]">Request more information</button></div>}
       </article>;
     })}</section> : <Empty message="Farmer applications will appear here after a farmer applies to a demo programme." />}
@@ -420,7 +420,7 @@ function InstitutionSection({ section, snapshot, status, totals, requests, reque
 function Header({ title, intro, institution }: { title: string; intro: string; institution: boolean }) {
   return (
     <header>
-      <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#587354]">{institution ? "Institution workspace" : "JARI platform management"}</p>
+      <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#587354]">{institution ? "Institution workspace" : "Jari platform management"}</p>
       <h1 className="mt-1 font-serif text-2xl font-medium tracking-tight text-[#20291f] sm:text-3xl">{title}</h1>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-[#737d70]">{intro}</p>
     </header>

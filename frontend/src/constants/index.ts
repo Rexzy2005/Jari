@@ -1,4 +1,4 @@
-export const APP_NAME = "JARI";
+export const APP_NAME = "Jari";
 export const API_BASE_URL = "mock://api/v1";
 
 export const ROUTES = {

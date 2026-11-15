@@ -104,7 +104,7 @@ export default function RegisterPage() {
           <div className="relative"><input id="register-password" type={showPassword ? "text" : "password"} autoComplete="new-password" aria-describedby="password-guidance" minLength={6} required className="input-shell pr-11" placeholder="Create a password" value={form.password} onChange={(event) => handleChange("password", event.target.value)} /><button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((current) => !current)} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[#758071] transition-colors hover:text-[#244b35]">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
           <div id="password-guidance" className="auth-password-guidance" aria-live="polite">
             <div className="auth-password-tips-heading"><ShieldCheck size={15} aria-hidden="true"/><span>Password checklist</span></div>
-            <p className="auth-password-hint">Choose a memorable phrase that you use only for JARI.</p>
+            <p className="auth-password-hint">Choose a memorable phrase that you use only for Jari.</p>
             <ul className="auth-password-checklist">
               <li className={passwordMeetsMinimum ? "is-met" : ""}>{passwordMeetsMinimum ? <CheckCircle2 size={16} aria-hidden="true"/> : <Circle size={16} aria-hidden="true"/>}<span>At least 6 characters</span></li>
               <li className={passwordsMatch ? "is-met" : form.confirmPassword ? "is-unmatched" : ""}>{passwordsMatch ? <CheckCircle2 size={16} aria-hidden="true"/> : form.confirmPassword ? <AlertCircle size={16} aria-hidden="true"/> : <Circle size={16} aria-hidden="true"/>}<span>Passwords match</span></li>
@@ -125,7 +125,7 @@ export default function RegisterPage() {
             <span>I agree to the</span>
           </label>
           <button type="button" className="auth-policy-link" onClick={() => setPolicyOpen(true)}>Privacy Policy and Data Use Terms</button>
-          <span className="auth-consent-period">for JARI.</span>
+          <span className="auth-consent-period">for Jari.</span>
         </div>
 
         <div className="auth-register-actions flex flex-col-reverse gap-2 sm:flex-row"><button type="button" onClick={() => setRegistrationStep(1)} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-[#e5e9e1] px-4 py-2 text-sm font-semibold text-[#526052]"><ArrowLeft size={16} aria-hidden="true"/>Back</button><button type="submit" disabled={isSubmitting} className="inline-flex min-h-12 flex-[2] items-center justify-center gap-2 rounded-xl bg-[#244b35] px-4 py-3 text-sm font-semibold text-white shadow-[0_8px_18px_-12px_rgba(36,75,53,.8)] transition-all hover:bg-[#193d2b] disabled:cursor-not-allowed disabled:bg-[#81947f]">{isSubmitting ? "Creating account..." : <>Create account <ArrowRight size={16} aria-hidden="true"/></>}</button></div>

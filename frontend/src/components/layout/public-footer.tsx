@@ -10,7 +10,7 @@ export function PublicFooter({ includeHeroPhotoCredit = false }: PublicFooterPro
     <footer className="bg-[#e9ede5] px-5 pb-6 pt-10 sm:px-8 sm:pb-7 sm:pt-14">
       <div className="mx-auto grid max-w-7xl gap-9 sm:grid-cols-2 lg:grid-cols-[1.25fr_.7fr_.85fr_1.1fr] lg:gap-12">
         <div>
-          <Link href="/" aria-label="JARI home"><JariLogo size={24} /></Link>
+          <Link href="/" aria-label="Jari home"><JariLogo size={24} /></Link>
           <p className="mt-4 max-w-xs text-sm leading-6 text-[#657064]">Agricultural risk intelligence and financial access for poultry farms.</p>
         </div>
         <div>
@@ -18,7 +18,7 @@ export function PublicFooter({ includeHeroPhotoCredit = false }: PublicFooterPro
           <ul className="mt-4 space-y-2.5 text-sm text-[#657064]">
             <li><Link className="transition-colors hover:text-[#244b35]" href="/#how-it-works">How it works</Link></li>
             <li><Link className="transition-colors hover:text-[#244b35]" href="/#services">Our services</Link></li>
-            <li><Link className="transition-colors hover:text-[#244b35]" href="/about">About JARI</Link></li>
+            <li><Link className="transition-colors hover:text-[#244b35]" href="/about">About Jari</Link></li>
           </ul>
         </div>
         <div>
@@ -38,7 +38,7 @@ export function PublicFooter({ includeHeroPhotoCredit = false }: PublicFooterPro
         </div>
       </div>
       <div className="mx-auto mt-10 flex max-w-7xl flex-col items-center justify-center gap-1 pt-5 text-center text-[11px] leading-5 text-[#7a8378]">
-        <p>&copy; {new Date().getFullYear()} JARI. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} Jari. All rights reserved.</p>
         {includeHeroPhotoCredit ? <p></p> : null}
       </div>
     </footer>
